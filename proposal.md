@@ -2,7 +2,7 @@
 Housing Impact Dashboard
 
 # Story
-We aim to empower QHC leadership by transforming raw case management data into a clear, weekly dashboard that highlights navigator output, client demographics, and critical placement trends to secure and sustain stable housing effectively.
+We aim to build a real-time dashboard that transforms QHC's case management data into actionable insights, enabling leadership to monitor housing placements, track navigator performance, and identify at-risk households to secure stable housing for low-income families.
 
 # Stakeholder
 Quality Housing Coalition (QHC), Executive Director（depending）
