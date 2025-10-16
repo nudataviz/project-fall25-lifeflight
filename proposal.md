@@ -1,8 +1,9 @@
-# ProjectName
+# Project Name
 Housing Impact Dashboard
 
 # Story
-We aim to build a real-time dashboard that transforms QHC's case management data into actionable insights, enabling leadership to monitor housing placements, track navigator performance, and identify at-risk households to secure stable housing for low-income families.
+
+We're building a dashboard that lets QHC leaders see what's happening in real-time—how many families they're serving, what help people need most, and how staff are doing—all at a glance, empowering them to make data-driven decisions and respond quickly to emerging needs.
 
 # Stakeholder
 Quality Housing Coalition (QHC), Executive Director（depending）
@@ -11,14 +12,14 @@ Quality Housing Coalition (QHC), Executive Director（depending）
 
 # Team
 ## Members
-- [shenyu li] (Team Lead)
-- [yantong guo][github: TT5650 ]
+- [Shenyu Li] (Team Lead)
+- [Yantong Guo][github: TT5650 ]
 
 ## Repo
 https://github.com/nudataviz/project-fall25-lishenyu1024
 
 ## Repo access
-Team lead is working with the instructor to ensure all members have access via GitHub Classroom team management. 
+✅ Team lead is working with the instructor to ensure all members have access via GitHub Classroom team management. 
 
 ---
 
