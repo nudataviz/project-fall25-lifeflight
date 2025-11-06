@@ -6,6 +6,7 @@ from config import config
 from utils.heatmap import generate_city_demand_heatmap, map_to_html
 from utils.getData import read_data
 from utils.responseTime import calculate_response_time
+from utils.veh_count import calculate_veh_count
 
 app = Flask(__name__)
 
@@ -16,6 +17,17 @@ app.config.from_object(config[env])
 # Enable CORS for cross-origin requests from frontend
 CORS(app)
 
+@app.route('/api/veh_count', methods=['GET'])
+def get_veh_count():
+    """Get veh count data"""
+    df = read_data()
+    veh_count = calculate_veh_count(df,2023)
+    return jsonify({
+        'status': 'success',
+        'message': 'Veh count data fetched successfully',
+        'data': veh_count
+    })
+
 @app.route('/api/heatmap',methods=['GET'])
 def get_heatmap():
     """Get heatmap visualization"""
@@ -24,22 +36,6 @@ def get_heatmap():
     html_map = map_to_html(map_obj)
 
     return html_map
-
-@app.route('/')
-def index():
-    return jsonify({
-        'status': 'success',
-        'message': 'LifeFlight API is running',
-        'version': '1.0.0'
-    })
-
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    """Health check endpoint"""
-    return jsonify({
-        'status': 'healthy',
-        'service': 'LifeFlight Backend API'
-    })
 
 @app.route('/api/indicators', methods=['GET'])
 def get_indicators():
@@ -61,6 +57,73 @@ def get_indicators():
             'total_cities_covered': total_cities_covered,
             'mart': mart,
             'yart': yart
+        }
+    })
+
+@app.route('/api/hourly_departure', methods=['GET'])
+def get_hourly_departure():
+    """Get hourly departure density data"""
+    
+    df = read_data()
+    df['tdate'] = pd.to_datetime(df['tdate'], errors='coerce')
+    df['Year'] = df['tdate'].dt.year
+    df = df[df['Year'] == 2023]
+
+    df['enrtime_dt'] = pd.to_datetime(df['enrtime'], errors='coerce').dt.time
+    df.dropna(subset=['enrtime_dt'], inplace=True)
+    df['enr_hour'] = pd.to_datetime(df['enrtime_dt'].astype(str)).dt.hour
+    
+    def get_season(month):
+        if month in [3, 4, 5]:
+            return 'Spring'
+        elif month in [6, 7, 8]:
+            return 'Summer'
+        elif month in [9, 10, 11]:
+            return 'Autumn'
+        else:
+            return 'Winter'
+    
+    df['tdate'] = pd.to_datetime(df['tdate'], errors='coerce')
+    df['season'] = df['tdate'].dt.month.apply(get_season)
+    
+    all_hours = list(range(24))
+    
+    overall_counts = df['enr_hour'].value_counts().sort_index()
+    overall_density = overall_counts / overall_counts.sum()
+    
+    overall_data = []
+    for hour in all_hours:
+        count = int(overall_counts.get(hour, 0))
+        density = float(overall_density.get(hour, 0))
+        overall_data.append({
+            'hour': hour,
+            'count': count,
+            'density': density
+        })
+    
+    
+    season_data = {}
+    for season in ['Spring', 'Summer', 'Autumn', 'Winter']:
+        season_df = df[df['season'] == season]
+        season_counts = season_df['enr_hour'].value_counts().sort_index()
+        season_density = season_counts / season_counts.sum()
+        
+        season_hourly = []
+        for hour in all_hours:
+            count = int(season_counts.get(hour, 0))
+            density = float(season_density.get(hour, 0))
+            season_hourly.append({
+                'hour': hour,
+                'count': count,
+                'density': density
+            })
+        season_data[season] = season_hourly
+    
+    return jsonify({
+        'status': 'success',
+        'data': {
+            'overall': overall_data,
+            'by_season': season_data
         }
     })
 
