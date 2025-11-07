@@ -10,7 +10,7 @@ const LineChart = ({ isCustomLineColors = false, isDashboard = false }) => {
   const [data, setData] = useState([]);
   useEffect(() => {
     const fetchData = async () => {
-      const response = await fetch('http://localhost:5000/api/veh_count');
+      const response = await fetch('http://localhost:5001/api/veh_count');
       const data = await response.json();
       setData(data.data);
       console.log('line',data.data);

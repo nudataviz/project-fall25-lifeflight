@@ -22,7 +22,7 @@ const Dashboard = () => {
   const [data, setData] = useState([]);
   useEffect(() => {
     const fetchData = async () => {
-      const response = await fetch('http://localhost:5000/api/indicators');
+      const response = await fetch('http://localhost:5001/api/indicators');
       const data = await response.json();
       setData(data.data);
     };
@@ -70,7 +70,7 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title={data.total_missions}
+            title="Tbh"
             subtitle="Total Missions Completed"
             progress="0.75"
             increase="+14%"
@@ -89,7 +89,7 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title={data.total_cities_covered}
+            title="Tbh"
             subtitle="Cities Served"
             progress="0.50"
             increase="+21%"
@@ -108,7 +108,7 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title={data.mart}
+            title="Tbh"
             subtitle="Monthly Average Response Time"
             progress="0.30"
             increase="+5%"
@@ -127,7 +127,7 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title={data.yart}
+            title="Tbh"
             subtitle="Yearly Average Response Time"
             progress="0.80"
             increase="+43%"
@@ -158,7 +158,7 @@ const Dashboard = () => {
                 fontWeight="600"
                 color={colors.grey[100]}
               >
-                Revenue Generated
+                Vehicle Type Statistics
               </Typography>
               {/* <Typography
                 variant="h3"

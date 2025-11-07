@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 
-const API_URL = 'http://localhost:5000/api/heatmap';
+const API_URL = 'http://localhost:5001/api/heatmap';
 
 const HeatMap = () => {
     const [map, setMap] = useState(null);

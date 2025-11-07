@@ -39,7 +39,7 @@ const HistogramChart = ({ isDashboard = false }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/hourly_departure');
+        const response = await fetch('http://localhost:5001/api/hourly_departure');
         const result = await response.json();
         setData(result.data);
         setLoading(false);
