@@ -22,6 +22,21 @@ def get_veh_count():
     """Get veh count data"""
     df = read_data()
     veh_count = calculate_veh_count(df,2023)
+    
+    # Map vehicle codes to names
+    veh_name_map = {
+        'LF1': 'Helicopter based out of Bangor',
+        'LF2': 'Helicopter based out of Lewiston',
+        'LF3': 'Airplane based out of Bangor',
+        'LF4': 'Helicopter based out of Sanford'
+    }
+    
+    # Transform data to include vehicle names
+    for item in veh_count:
+        veh_code = item['id']
+        if veh_code in veh_name_map:
+            item['id'] = f"{veh_name_map[veh_code]} ({veh_code})"
+    
     return jsonify({
         'status': 'success',
         'message': 'Veh count data fetched successfully',
@@ -42,18 +57,37 @@ def get_indicators():
     """Get indicator data"""
     df = read_data()
     # 1 total missions
-    total_missions = df['Incident Number'].nunique()
+    total_missions = df['yearwithrc'].nunique()
+    total_missions_formatted = f"{total_missions:,}" 
     # 2 Total Cities Covered
     total_cities_covered = df['PU City'].nunique()
     # 3 Monthly Average Response Time
-    mart = calculate_response_time(df,2023,12)
+    mart_str = calculate_response_time(df,2023,12)
     # 4 Yearly Average Response Time
-    yart = calculate_response_time(df,2023)
+    yart_str = calculate_response_time(df,2023)
+    
+    # Convert timedelta string to "X min Y sec" format
+    def extract_minutes_seconds(timedelta_str):
+        if timedelta_str == "N/A":
+            return "N/A"
+        try:
+            # Parse timedelta string like "0 days 00:22:09.824561403"
+            td = pd.Timedelta(timedelta_str)
+            total_seconds = int(td.total_seconds())
+            minutes = total_seconds // 60
+            seconds = total_seconds % 60
+            return f"{minutes} min {seconds} sec"
+        except:
+            return "N/A"
+    
+    mart = extract_minutes_seconds(mart_str)
+    yart = extract_minutes_seconds(yart_str)
+    
     return jsonify({
         'status': 'success',
         'message': 'Indicator data fetched successfully',
         'data': {
-            'total_missions': total_missions,
+            'total_missions': total_missions_formatted,
             'total_cities_covered': total_cities_covered,
             'mart': mart,
             'yart': yart

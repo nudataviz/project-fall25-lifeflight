@@ -86,7 +86,7 @@ const Sidebar = () => {
             )}
           </MenuItem>
 
-         
+
 
           <Box paddingLeft={isCollapsed ? undefined : "10%"}>
             <Item
@@ -135,7 +135,7 @@ const Sidebar = () => {
               Charts
             </Typography>
             <Item
-              title="Bar Chart"
+              title="Histogram Chart"
               to="/bar"
               icon={<BarChartOutlinedIcon />}
               selected={selected}

@@ -7,7 +7,7 @@ import HistogramChart from "../../components/HistogramChart";
 const Bar = () => {
   return (
     <Box m="20px">
-      <Header title="Bar Chart" subtitle="Simple Bar Chart" />
+      <Header title="Histogram Chart" subtitle="Overall statistics of hourly departure frequency and statistics by season" />
       <Box height="75vh">
         <HistogramChart />
       </Box>

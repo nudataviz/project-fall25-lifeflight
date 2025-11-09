@@ -8,33 +8,39 @@ const StatBox = ({ title, subtitle, icon, progress, increase }) => {
 
   return (
     <Box width="100%" m="0 30px">
-      <Box display="flex" justifyContent="space-between">
-        <Box>
-          {icon}
-          <Typography
-            variant="h4"
-            fontWeight="bold"
-            sx={{ color: colors.grey[100] }}
+      <Box display="flex" alignItems="center" mb="8px">
+        {icon && (
+          <Box
+            sx={{
+              mr: "8px",
+              display: "flex",
+              alignItems: "center",
+            }}
           >
-            {title}
-          </Typography>
-        </Box>
-        <Box>
-          <ProgressCircle progress={progress} />
-        </Box>
-      </Box>
-      <Box display="flex" justifyContent="space-between" mt="2px">
-        <Typography variant="h5" sx={{ color: colors.greenAccent[500] }}>
-          {subtitle}
-        </Typography>
+            {icon}
+          </Box>
+        )}
         <Typography
           variant="h5"
-          fontStyle="italic"
-          sx={{ color: colors.greenAccent[600] }}
+          fontWeight="600"
+          sx={{ 
+            color: colors.grey[100],
+            fontSize: "1.5rem"
+          }}
         >
-          {increase}
+          {subtitle}
         </Typography>
       </Box>
+      <Typography 
+        variant="body1" 
+        sx={{ 
+          color: colors.grey[400],
+          fontWeight: 400,
+          fontSize: "0.875rem"
+        }}
+      >
+        {title}
+      </Typography>
     </Box>
   );
 };

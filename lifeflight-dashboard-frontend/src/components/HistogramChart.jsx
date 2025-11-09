@@ -14,9 +14,9 @@ import {
 import { Chart } from 'react-chartjs-2';
 import { useTheme } from "@mui/material";
 import { tokens } from "../theme";
-import { Box, Typography, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { Box, ToggleButton, ToggleButtonGroup } from "@mui/material";
 
-// 注册 Chart.js 组件
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -55,7 +55,6 @@ const HistogramChart = ({ isDashboard = false }) => {
     return <Box>Loading...</Box>;
   }
 
-  // 准备图表数据
   const getChartData = () => {
     if (viewMode === 'overall') {
       const hours = data.overall.map(item => item.hour);
@@ -89,19 +88,19 @@ const HistogramChart = ({ isDashboard = false }) => {
         ],
       };
     } else {
-      // 按季节分组
+
       const hours = data.overall.map(item => item.hour);
       const seasons = ['Spring', 'Summer', 'Autumn', 'Winter'];
       const seasonColors = [
         colors.greenAccent[500],
         colors.blueAccent[500],
         colors.redAccent[500],
-        colors.blueAccent[500],
+        colors.grey[500],
       ];
       
       const datasets = [];
       
-      // 添加每个季节的密度曲线
+    
       seasons.forEach((season, index) => {
         if (data.by_season[season]) {
           const densities = data.by_season[season].map(item => item.density);

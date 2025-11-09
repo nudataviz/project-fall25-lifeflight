@@ -1,18 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
 import { tokens } from "../../theme";
-import { mockTransactions } from "../../data/mockData";
-import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
-import EmailIcon from "@mui/icons-material/Email";
-import PointOfSaleIcon from "@mui/icons-material/PointOfSale";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import TrafficIcon from "@mui/icons-material/Traffic";
+import AccessAlarmOutlinedIcon from '@mui/icons-material/AccessAlarmOutlined';
+import TimelineOutlinedIcon from '@mui/icons-material/TimelineOutlined';
+import FmdGoodOutlinedIcon from '@mui/icons-material/FmdGoodOutlined';
 import Header from "../../components/Header";
 import LineChart from "../../components/LineChart";
 import GeographyChart from "../../components/GeographyChart";
 import BarChart from "../../components/BarChart";
 import StatBox from "../../components/StatBox";
-import ProgressCircle from "../../components/ProgressCircle";
 import HistogramChart from "../../components/HistogramChart";
 
 const Dashboard = () => {
@@ -34,9 +30,9 @@ const Dashboard = () => {
   return (
     <Box m="20px">
       {/* HEADER */}
-      
+
       <Box display="flex" justifyContent="space-between" alignItems="center">
-        <Header title="DASHBOARD" subtitle="Welcome to your dashboard" />
+        <Header title="DASHBOARD" subtitle="Welcome to LifeFlight dashboard" />
 
         {/* <Box>
           <Button
@@ -70,13 +66,11 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title="Tbh"
-            subtitle="Total Missions Completed"
-            progress="0.75"
-            increase="+14%"
+            title="Total Missions Completed"
+            subtitle={data.total_missions}
             icon={
-              <EmailIcon
-                sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
+              <TimelineOutlinedIcon
+                sx={{ color: colors.greenAccent[400], fontSize: "26px" }}
               />
             }
           />
@@ -89,13 +83,13 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title="Tbh"
-            subtitle="Cities Served"
+            title="Cities Served"
+            subtitle={data.total_cities_covered}
             progress="0.50"
             increase="+21%"
             icon={
-              <PointOfSaleIcon
-                sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
+              <FmdGoodOutlinedIcon
+                sx={{ color: colors.greenAccent[400], fontSize: "26px" }}
               />
             }
           />
@@ -108,13 +102,13 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title="Tbh"
-            subtitle="Monthly Average Response Time"
+            title="Monthly Average Response Time"
+            subtitle={data.mart}
             progress="0.30"
             increase="+5%"
             icon={
-              <PersonAddIcon
-                sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
+              <AccessAlarmOutlinedIcon
+                sx={{ color: colors.greenAccent[400], fontSize: "26px" }}
               />
             }
           />
@@ -127,13 +121,13 @@ const Dashboard = () => {
           justifyContent="center"
         >
           <StatBox
-            title="Tbh"
-            subtitle="Yearly Average Response Time"
+            title="Yearly Average Response Time"
+            subtitle={data.yart}
             progress="0.80"
             increase="+43%"
             icon={
-              <TrafficIcon
-                sx={{ color: colors.greenAccent[600], fontSize: "26px" }}
+              <AccessAlarmOutlinedIcon
+                sx={{ color: colors.greenAccent[400], fontSize: "26px" }}
               />
             }
           />
@@ -158,7 +152,7 @@ const Dashboard = () => {
                 fontWeight="600"
                 color={colors.grey[100]}
               >
-                Vehicle Type Statistics
+                Vehicle Type Demand
               </Typography>
               {/* <Typography
                 variant="h3"
@@ -243,7 +237,7 @@ const Dashboard = () => {
               fontWeight="600"
               color={colors.grey[100]}
             >
-              Hourly Departure Analysis
+              Hourly Departure Demand
             </Typography>
           </Box>
           <Box height="300px" m="-20px 0 0 0">
