@@ -135,6 +135,14 @@ const Sidebar = () => {
               Charts
             </Typography>
             <Item
+              title="Demand Forecasting"
+              to="/demand-forecasting"
+              // icon={<BarChartOutlinedIcon />}
+              selected={selected}
+              setSelected={setSelected}
+            />
+
+            <Item
               title="Histogram Chart"
               to="/bar"
               icon={<BarChartOutlinedIcon />}
