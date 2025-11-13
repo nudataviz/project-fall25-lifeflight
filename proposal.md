@@ -2,7 +2,7 @@
 FlightPath Optimizer
 
 # Story
-We are prototyping a sophisticated predictive analytics platform that will empower LifeFlight to strategically **forecast emergency medical demand** over a 5-10 year horizon and model **optimal resource allocation scenarios** (such as new base locations) to save more lives and ensure equitable service coverage.
+We are prototyping a sophisticated predictive analytics platform that will empower LifeFlight to strategically **forecast emergency medical demand** over a 5–10 year horizon and model **optimal resource allocation scenarios** (such as new base locations) to save more lives and ensure equitable service coverage. The platform will integrate key external data, including **population projections, historical and forecasted weather data**, and **age demographics**, to enhance the precision of demand forecasts and resource optimization.
 
 # Stakeholder
 Dan Koloski (Initial Contact), LifeFlight Staff (Eventual Users)
@@ -24,10 +24,16 @@ https://github.com/nudataviz/project-fall25-lishenyu1024
 
 # Data
 ## Describe
-We will use historical and current **LifeFlight operational data** (including transport volume, patient origin/destination, asset utilization) combined with **external factors** (weather, hospital closures, demographic shifts) to train predictive models and execute scenario simulations.
+We will use historical and current **LifeFlight operational data** (including transport volume, patient origin/destination, asset utilization) combined with the following **external data** to train predictive models and execute scenario simulations:
+- **Population data** (historical: 2012–2023, and projections for the next 5–10 years, by county/city)
+- **Population age structure** data, detailing age distribution at a county/city level
+- **Historical weather data** (e.g., extreme weather days, seasonal trends)
+- **Weather forecast data** (for future weather scenarios)
+
+These datasets will be used to integrate external variables into forecasting models, enabling us to predict demand and optimize resources more accurately over the next 5–10 years. 
 
 ## Link / Risks
-The core data is currently available in a **SharePoint** repository accessible via Dan Koloski. The primary risk is the **complexity of integrating and synthesizing diverse external datasets** (e.g., population projections, weather data) required for accurate long-term **5-10 year forecasting** and variable 'what-if' modeling.
+The core data is currently available in a **SharePoint** repository accessible via Dan Koloski. The primary risk is the **complexity of integrating and synthesizing diverse external datasets** (e.g., population projections, weather data) required for accurate long-term **5–10 year forecasting** and variable "what-if" modeling. The challenge lies in ensuring the quality and consistency of population projections and weather forecasts, especially considering their impact on demand forecasting.
 
 ---
 

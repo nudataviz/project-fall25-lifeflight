@@ -1,0 +1,14 @@
+hospital_name,county,facility_type,closure_date,closure_year,reason,status,notes,births_last_year,births_previous_year,births_decade_ago
+Mount Desert Island Hospital,Hancock,Birthing Unit,2024-07,2024,Sharply declining birth rates,Closed,Closed in July 2024,32,59,100
+Coopers Mills Nursing Home,Lincoln,Nursing Home,2021,2021,Staffing shortages and financial difficulties,Closed,Residents had to move 30 miles away,,
+Presque Isle Nursing Home,Aroostook,Nursing Home,2024,2024,Low reimbursement rates staffing shortages financial losses,Closed,Lost $250000 in 3 months operated at 60% capacity,,
+Caribou Nursing Home,Aroostook,Nursing Home,2024,2024,Low reimbursement rates staffing shortages,Sold,Sold by Phil Cyr,,
+STATISTICS: 11 birthing units closed in past decade,Statewide,Birthing Unit,2015-2024,,Total closures,11 closed 17 remaining,,,,
+STATISTICS: 26 nursing homes closed in past decade,Statewide,Nursing Home,2015-2024,,Total closures,26 closed 78 remaining,,,,
+Aroostook County - Half of birthing units closed,Aroostook,Birthing Unit,2015-2024,,Rural healthcare challenges,Multiple closures,,,,
+Waldo County - Only birthing center closed,Waldo,Birthing Unit,2015-2024,,Rural healthcare challenges,Closed,,,,
+Northern Penobscot - No birthing services,Penobscot,Birthing Unit,2015-2024,,Rural healthcare challenges,No services available,,,,
+Washington County - 2 of 4 nursing homes closed,Washington,Nursing Home,2015-2024,,Staffing and financial challenges,2 closed 2 remaining,,,,
+Hancock County - All nursing homes closed,Hancock,Nursing Home,2015-2024,,Staffing and financial challenges,All closed,,,,
+Northern Somerset County - No nursing homes,Somerset,Nursing Home,2015-2024,,Staffing and financial challenges,No services available,,,,
+Downeast Community Hospital,Washington,Birthing Unit,Still Open,,,Still Operating,Has obstetrics department,,
