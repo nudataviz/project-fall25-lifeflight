@@ -10,6 +10,7 @@ from utils.responseTime import calculate_response_time
 from utils.veh_count import calculate_veh_count
 from utils.predicting.predict_demand import predict_demand as forecast_demand
 from utils.seasonality_1_2 import get_seasonality_heatmap
+from utils.demographics_1_3 import get_demographics_elasticity
 
 app = Flask(__name__)
 
@@ -392,6 +393,59 @@ def get_seasonality_heatmap_api():
         return jsonify({
             'status': 'error',
             'message': f'Failed to get seasonality heatmap: {str(e)}'
+        }), 500
+
+@app.route('/api/demographics_elasticity', methods=['GET'])
+def get_demographics_elasticity_api():
+    """
+    Get demographics elasticity analysis data (Chart 1.3).
+    
+    Query parameters:
+    - year: Year to analyze (required, default: 2023)
+    - start_year_for_growth: Start year for growth rate calculation (optional)
+    - end_year_for_growth: End year for growth rate calculation (optional)
+    - independent_vars: Comma-separated list of independent variables (default: 'pct_65plus,growth_rate')
+    """
+    try:
+        year = int(request.args.get('year', 2023))
+        start_year = request.args.get('start_year_for_growth', None)
+        end_year = request.args.get('end_year_for_growth', None)
+        independent_vars_str = request.args.get('independent_vars', 'pct_65plus,growth_rate')
+        
+        if start_year:
+            start_year = int(start_year)
+        if end_year:
+            end_year = int(end_year)
+        
+        independent_vars = [v.strip() for v in independent_vars_str.split(',')]
+        
+        if year < 2012 or year > 2023:
+            return jsonify({
+                'status': 'error',
+                'message': 'Year must be between 2012 and 2023'
+            }), 400
+        
+        result = get_demographics_elasticity(
+            year=year,
+            start_year_for_growth=start_year,
+            end_year_for_growth=end_year,
+            independent_vars=independent_vars
+        )
+        
+        return jsonify({
+            'status': 'success',
+            'data': result
+        })
+        
+    except ValueError as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Invalid parameter: {str(e)}'
+        }), 400
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Failed to get demographics elasticity data: {str(e)}'
         }), 500
 
 @app.route('/api/test', methods=['GET'])

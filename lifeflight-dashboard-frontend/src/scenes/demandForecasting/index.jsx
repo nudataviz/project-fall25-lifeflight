@@ -4,6 +4,7 @@ import HistogramChart from "../../components/HistogramChart";
 import PredTest from "../../components/PredTest";
 import LineChart from "../../components/LineChart";
 import SeasonalityHeatmap from "../../components/1.2SeasonalityHeatmap";
+import DemographicsElasticity from "../../components/1.3DemographicsElasticity";
 
 
 
@@ -27,6 +28,11 @@ export default function DemandForecasting() {
       {/* Chart 1.2: Seasonality & Day-of-Week/Hour Heatmap */}
       <Box mt="500px">
         <SeasonalityHeatmap />
+      </Box>
+
+      {/* Chart 1.3: Demographics vs. Demand Elasticity */}
+      <Box mt="100px">
+        <DemographicsElasticity />
       </Box>
     </Box>
   );
