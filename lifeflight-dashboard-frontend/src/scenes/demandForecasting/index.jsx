@@ -17,14 +17,16 @@ export default function DemandForecasting() {
       <Box height="75vh">
         <HistogramChart />
       </Box>
+      
+      <Box height="75vh">
+        <LineChart />
+      </Box>
 
       <Box sx={{ minHeight: '25vh', mb: 3 }}>
         <PredTest />
       </Box>
 
-      <Box height="75vh">
-        <LineChart />
-      </Box>
+      
 
       {/* Chart 1.2: Seasonality & Day-of-Week/Hour Heatmap */}
       <Box mt="500px">
