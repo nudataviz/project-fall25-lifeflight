@@ -10,6 +10,10 @@ from utils.getData import read_data
 from utils.responseTime import calculate_response_time
 from utils.veh_count import calculate_veh_count
 from utils.predicting.predict_demand import predict_demand as forecast_demand
+from utils.predicting.predict_demand import cross_validate_prophet
+from utils.predicting.predict_demand import prophet_predict
+from utils.predicting.predict_demand import extract_forecast_data
+from utils.predicting.predict_demand import cross_validate_prophet
 from utils.seasonality_1_2 import get_seasonality_heatmap
 from utils.demographics_1_3 import get_demographics_elasticity
 from utils.event_impact_1_4 import get_event_impact_analysis, get_all_events
