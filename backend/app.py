@@ -22,6 +22,7 @@ from utils.weather_risk_2_4 import get_weather_risk_analysis
 from utils.scenario_whatif_2_1 import simulate_scenario, get_base_locations, compare_scenarios
 from utils.pareto_sensitivity_2_3 import get_pareto_sensitivity_analysis
 from utils.base_siting_2_2 import get_base_siting_analysis
+from utils.kpi_bullets_4_1 import get_kpi_bullets
 
 app = Flask(__name__)
 
@@ -926,6 +927,38 @@ def get_weather_risk_api():
         return jsonify({
             'status': 'error',
             'message': f'Failed to get weather risk data: {str(e)}'
+        }), 500
+
+@app.route('/api/kpi_bullets', methods=['GET'])
+def get_kpi_bullets_api():
+    """
+    Get KPI bullets data for executive dashboard (Chart 4.1).
+    
+    Query parameters:
+    - year: Year to calculate KPIs for (default: 2023)
+    - sla_target_minutes: SLA target in minutes (default: 20)
+    - include_historical: Include historical trends (default: true)
+    """
+    try:
+        year = int(request.args.get('year', 2023))
+        sla_target_minutes = int(request.args.get('sla_target_minutes', 20))
+        include_historical = request.args.get('include_historical', 'true').lower() == 'true'
+        
+        result = get_kpi_bullets(
+            year=year,
+            sla_target_minutes=sla_target_minutes,
+            include_historical=include_historical
+        )
+        
+        return jsonify({
+            'status': 'success',
+            'data': result
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Failed to get KPI bullets: {str(e)}'
         }), 500
 
 @app.route('/api/test', methods=['GET'])
