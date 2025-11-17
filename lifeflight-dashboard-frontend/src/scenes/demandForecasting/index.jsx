@@ -3,6 +3,7 @@ import { Box } from "@mui/material";
 import HistogramChart from "../../components/HistogramChart";
 import PredTest from "../../components/PredTest";
 import LineChart from "../../components/LineChart";
+import PredictDemand from "../../components/PredictDemand";
 import SeasonalityHeatmap from "../../components/1.2SeasonalityHeatmap";
 import DemographicsElasticity from "../../components/1.3DemographicsElasticity";
 import EventImpactReplay from "../../components/1.4EventImpactReplay";
