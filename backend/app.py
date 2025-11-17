@@ -23,6 +23,7 @@ from utils.scenario_whatif_2_1 import simulate_scenario, get_base_locations, com
 from utils.pareto_sensitivity_2_3 import get_pareto_sensitivity_analysis
 from utils.base_siting_2_2 import get_base_siting_analysis
 from utils.kpi_bullets_4_1 import get_kpi_bullets
+from utils.trend_wall_4_2 import get_trend_wall_data
 
 app = Flask(__name__)
 
@@ -959,6 +960,39 @@ def get_kpi_bullets_api():
         return jsonify({
             'status': 'error',
             'message': f'Failed to get KPI bullets: {str(e)}'
+        }), 500
+
+@app.route('/api/trend_wall', methods=['GET'])
+def get_trend_wall_api():
+    """
+    Get trend wall data for executive dashboard (Chart 4.2).
+    
+    Query parameters:
+    - current_year: Current year (default: 2023)
+    - current_month: Current month (optional, default: None = all months)
+    - forecast_months: Number of months to forecast ahead (default: 6)
+    """
+    try:
+        current_year = int(request.args.get('current_year', 2023))
+        current_month = request.args.get('current_month')
+        current_month = int(current_month) if current_month else None
+        forecast_months = int(request.args.get('forecast_months', 6))
+        
+        result = get_trend_wall_data(
+            current_year=current_year,
+            current_month=current_month,
+            forecast_months=forecast_months
+        )
+        
+        return jsonify({
+            'status': 'success',
+            'data': result
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Failed to get trend wall data: {str(e)}'
         }), 500
 
 @app.route('/api/test', methods=['GET'])
