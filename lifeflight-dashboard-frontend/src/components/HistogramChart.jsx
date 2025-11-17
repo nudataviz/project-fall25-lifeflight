@@ -14,7 +14,8 @@ import {
 import { Chart } from 'react-chartjs-2';
 import { useTheme } from "@mui/material";
 import { tokens } from "../theme";
-import { Box, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { Box, ToggleButton, ToggleButtonGroup, Typography, Paper, Grid, CircularProgress } from "@mui/material";
+
 
 
 ChartJS.register(
@@ -52,7 +53,11 @@ const HistogramChart = ({ isDashboard = false }) => {
   }, []);
 
   if (loading) {
-    return <Box>Loading...</Box>;
+    return (
+      <Box m={isDashboard ? 0 : "20px"} display="flex" justifyContent="center" alignItems="center" height={isDashboard ? "250px" : "400px"}>
+        <CircularProgress />
+      </Box>
+    );
   }
 
   const getChartData = () => {
@@ -204,37 +209,56 @@ const HistogramChart = ({ isDashboard = false }) => {
   };
 
   return (
-    <Box height={isDashboard ? "250px" : "400px"} width="100%">
+    <Box m={isDashboard ? 0 : "20px"}>
       {!isDashboard && (
-        <Box mb={2} display="flex" justifyContent="center">
-          <ToggleButtonGroup
-            value={viewMode}
-            exclusive
-            onChange={(e, newMode) => {
-              if (newMode !== null) setViewMode(newMode);
-            }}
-            aria-label="view mode"
-            sx={{
-              '& .MuiToggleButton-root': {
-                color: colors.grey[100],
-                borderColor: colors.grey[700],
-                '&.Mui-selected': {
-                  backgroundColor: colors.blueAccent[700],
-                  color: colors.grey[100],
-                },
-              },
-            }}
-          >
-            <ToggleButton value="overall" aria-label="overall">
-              Overall
-            </ToggleButton>
-            <ToggleButton value="by_season" aria-label="by season">
-              By Season
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
+        <Paper sx={{ p: 3, mb: 3, backgroundColor: colors.primary[400] }}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} md={8}>
+              <Typography variant="h3" sx={{ mb: 1, color: colors.grey[100] }}>
+              Hourly Departure Density(Base on data in 2023)
+              </Typography>
+              {/* <Typography variant="h6" sx={{ mb: 1, color: colors.grey[300] }}>
+                Hourly Departure Density(Base on data in 2023)
+              </Typography> */}
+              <Typography variant="body2" sx={{ color: colors.grey[400], fontStyle: 'italic' }}>
+                This chart shows the hourly departure density of LifeFlight missions.
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={4} sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+              <ToggleButtonGroup
+                value={viewMode}
+                exclusive
+                onChange={(e, newMode) => {
+                  if (newMode !== null) setViewMode(newMode);
+                }}
+                aria-label="view mode"
+                sx={{
+                  '& .MuiToggleButton-root': {
+                    color: colors.grey[100],
+                    borderColor: colors.grey[700],
+                    '&.Mui-selected': {
+                      backgroundColor: colors.blueAccent[700],
+                      color: colors.grey[100],
+                    },
+                  },
+                }}
+              >
+                <ToggleButton value="overall" aria-label="overall">
+                  Overall
+                </ToggleButton>
+                <ToggleButton value="by_season" aria-label="by season">
+                  By Season
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Grid>
+          </Grid>
+        </Paper>
       )}
-      <Chart type="bar" data={chartData} options={options} />
+      <Paper sx={{ p: 2, backgroundColor: colors.primary[400] }}>
+        <Box height={isDashboard ? "250px" : "400px"} width="100%">
+          <Chart type="bar" data={chartData} options={options} />
+        </Box>
+      </Paper>
     </Box>
   );
 };

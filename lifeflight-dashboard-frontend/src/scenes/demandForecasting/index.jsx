@@ -15,11 +15,9 @@ export default function DemandForecasting() {
     <Box m="20px">
       <Header title="Demand Forecasting" subtitle="Demand Forecasting" />
 
-      {/* <Box height="75vh">
-        <HistogramChart />
-      </Box>
       
-      <Box height="75vh">
+      
+      {/* <Box height="75vh">
         <LineChart />
       </Box> */}
 
@@ -33,11 +31,15 @@ export default function DemandForecasting() {
       <Box mt="100px">
         <SeasonalityHeatmap />
       </Box>
+      <Box height="75vh">
+        <HistogramChart />
+      </Box>
 
       {/* Chart 1.3: Demographics vs. Demand Elasticity */}
       <Box mt="100px">
         <DemographicsElasticity />
       </Box>
+      
 
       {/* Chart 1.4: External Event Impact Replay */}
       <Box mt="100px">
