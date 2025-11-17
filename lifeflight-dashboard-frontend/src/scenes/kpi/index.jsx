@@ -2,6 +2,7 @@ import { Box } from "@mui/material";
 import Header from "../../components/Header";
 import KPIBullets from "../../components/4.1KPIBullets";
 import TrendWall from "../../components/4.2TrendWall";
+import CostBenefitThroughput from "../../components/4.3CostBenefitThroughput";
 export default function KPIDashboard() {
   return (
     <Box m="20px">
@@ -15,6 +16,11 @@ export default function KPIDashboard() {
       {/* Chart 4.2: Trend Wall */}
       <Box mt="40px">
         <TrendWall />
+      </Box>
+      
+      {/* Chart 4.3: Cost–Benefit–Throughput Dual-Axis */}
+      <Box mt="40px">
+        <CostBenefitThroughput />
       </Box>
     </Box>
   );
