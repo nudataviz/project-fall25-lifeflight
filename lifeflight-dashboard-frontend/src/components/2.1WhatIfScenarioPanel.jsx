@@ -7,16 +7,12 @@
 // and a main panel showing KPIs (missions, SLA attainment, unmet demand, cost) as mini-cards.
 // Users can save and compare multiple scenarios.
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   Box, 
   Paper, 
   Typography, 
   TextField,
-  Select, 
-  MenuItem, 
-  FormControl, 
-  InputLabel,
   Button,
   CircularProgress,
   Alert,
@@ -26,7 +22,6 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material';
 import { tokens } from '../theme';
-import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
@@ -37,13 +32,15 @@ const WhatIfScenarioPanel = () => {
   
   // Scenario parameters
   const [fleetSize, setFleetSize] = useState(3);
+  const [missionsPerVehiclePerDay, setMissionsPerVehiclePerDay] = useState(3);
   const [crewsPerVehicle, setCrewsPerVehicle] = useState(2);
-  const [selectedBases, setSelectedBases] = useState(['BANGOR']);
+  const [selectedBases, setSelectedBases] = useState([]);
   const [serviceRadius, setServiceRadius] = useState(50);
   const [slaTarget, setSlaTarget] = useState(20);
   
   // Data
-  const [baseLocations, setBaseLocations] = useState([]);
+  const [baseLocations, setBaseLocations] = useState({ existing: [], candidates: [] });
+  const [basesInitialized, setBasesInitialized] = useState(false);
   const [scenarioResult, setScenarioResult] = useState(null);
   const [savedScenarios, setSavedScenarios] = useState([]);
   const [comparisonMode, setComparisonMode] = useState(false);
@@ -53,30 +50,29 @@ const WhatIfScenarioPanel = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
-  useEffect(() => {
-    fetchBaseLocations();
-  }, []);
-  
-  useEffect(() => {
-    if (baseLocations.length > 0) {
-      simulateScenario();
-    }
-  }, [fleetSize, crewsPerVehicle, selectedBases, serviceRadius, slaTarget]);
-  
-  const fetchBaseLocations = async () => {
+  const fetchBaseLocations = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:5001/api/base_locations');
       const result = await response.json();
       
       if (result.status === 'success') {
-        setBaseLocations(result.data);
+        const existing = result.data.existing_bases || [];
+        const candidates = result.data.candidate_bases || [];
+        setBaseLocations({
+          existing,
+          candidates,
+        });
+        if (!basesInitialized && existing.length > 0) {
+          setSelectedBases(existing.map((base) => base.name));
+          setBasesInitialized(true);
+        }
       }
     } catch (err) {
       console.error('Failed to fetch base locations:', err);
     }
-  };
+  }, [basesInitialized]);
   
-  const simulateScenario = async () => {
+  const simulateScenario = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -88,6 +84,7 @@ const WhatIfScenarioPanel = () => {
         },
         body: JSON.stringify({
           fleet_size: fleetSize,
+          missions_per_vehicle_per_day: missionsPerVehiclePerDay,
           crews_per_vehicle: crewsPerVehicle,
           base_locations: selectedBases,
           service_radius_miles: serviceRadius,
@@ -113,7 +110,18 @@ const WhatIfScenarioPanel = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fleetSize, missionsPerVehiclePerDay, crewsPerVehicle, selectedBases, serviceRadius, slaTarget]);
+
+  useEffect(() => {
+    fetchBaseLocations();
+  }, [fetchBaseLocations]);
+  
+  useEffect(() => {
+    const totalBases = (baseLocations.existing?.length || 0) + (baseLocations.candidates?.length || 0);
+    if (totalBases > 0) {
+      simulateScenario();
+    }
+  }, [simulateScenario, baseLocations]);
   
   const handleBaseToggle = (baseName) => {
     if (selectedBases.includes(baseName)) {
@@ -217,21 +225,46 @@ const WhatIfScenarioPanel = () => {
                   inputProps={{ min: 1, max: 20 }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      color: colors.grey[900],
+                      color: colors.grey[100],
                       '& fieldset': {
-                        borderColor: colors.grey[400],
+                        borderColor: colors.grey[500],
                       },
                       '&:hover fieldset': {
-                        borderColor: colors.grey[600],
+                        borderColor: colors.grey[500],
                       },
                     },
                     '& .MuiInputLabel-root': {
-                      color: colors.grey[700],
+                      color: colors.grey[100],
                     },
                   }}
                 />
               </Grid>
-              
+
+              {/* Missions per Vehicle per Day */}
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Missions per Vehicle per Day"
+                  value={missionsPerVehiclePerDay}
+                  onChange={(e) => setMissionsPerVehiclePerDay(parseInt(e.target.value) || 1)}
+                  inputProps={{ min: 1, max: 10 }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      color: colors.grey[100],
+                      '& fieldset': {
+                        borderColor: colors.grey[500],
+                      },
+                      '&:hover fieldset': {
+                        borderColor: colors.grey[500],
+                      },
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: colors.grey[100],
+                    },
+                  }}
+                />
+              </Grid>
               {/* Crews per Vehicle */}
               <Grid item xs={12}>
                 <TextField
@@ -243,16 +276,16 @@ const WhatIfScenarioPanel = () => {
                   inputProps={{ min: 1, max: 5 }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      color: colors.grey[900],
+                      color: colors.grey[100],
                       '& fieldset': {
-                        borderColor: colors.grey[400],
+                        borderColor: colors.grey[500],
                       },
                       '&:hover fieldset': {
-                        borderColor: colors.grey[600],
+                        borderColor: colors.grey[500],
                       },
                     },
                     '& .MuiInputLabel-root': {
-                      color: colors.grey[700],
+                      color: colors.grey[100],
                     },
                   }}
                 />
@@ -269,16 +302,16 @@ const WhatIfScenarioPanel = () => {
                   inputProps={{ min: 10, max: 200, step: 5 }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      color: colors.grey[900],
+                      color: colors.grey[100],
                       '& fieldset': {
-                        borderColor: colors.grey[400],
+                        borderColor: colors.grey[500],
                       },
                       '&:hover fieldset': {
-                        borderColor: colors.grey[600],
+                        borderColor: colors.grey[500],
                       },
                     },
                     '& .MuiInputLabel-root': {
-                      color: colors.grey[700],
+                      color: colors.grey[100],
                     },
                   }}
                 />
@@ -295,16 +328,16 @@ const WhatIfScenarioPanel = () => {
                   inputProps={{ min: 5, max: 60 }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      color: colors.grey[900],
+                      color: colors.grey[100],
                       '& fieldset': {
-                        borderColor: colors.grey[400],
+                        borderColor: colors.grey[500],
                       },
                       '&:hover fieldset': {
-                        borderColor: colors.grey[600],
+                        borderColor: colors.grey[500],
                       },
                     },
                     '& .MuiInputLabel-root': {
-                      color: colors.grey[700],
+                      color: colors.grey[100],
                     },
                   }}
                 />
@@ -315,27 +348,59 @@ const WhatIfScenarioPanel = () => {
                 <Typography variant="body1" sx={{ mb: 1, color: '#000000' }}>
                   Base Locations
                 </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {baseLocations.map((base) => (
-                    <Chip
-                      key={base.name}
-                      label={base.name}
-                      onClick={() => handleBaseToggle(base.name)}
-                      color={selectedBases.includes(base.name) ? 'primary' : 'default'}
-                      sx={{
-                        color: selectedBases.includes(base.name) ? colors.grey[100] : '#000000',
-                        backgroundColor: selectedBases.includes(base.name) 
-                          ? colors.blueAccent[700] 
-                          : '#ffffff',
-                        border: selectedBases.includes(base.name) ? 'none' : `1px solid ${colors.grey[300]}`,
-                        '&:hover': {
-                          backgroundColor: selectedBases.includes(base.name)
-                            ? colors.blueAccent[600]
-                            : colors.grey[100]
-                        }
-                      }}
-                    />
-                  ))}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Box>
+                    <Typography variant="body2" sx={{ mb: 1, color: colors.grey[600], fontWeight: 'bold' }}>
+                      Existing Bases
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {baseLocations.existing.map((base) => (
+                        <Chip
+                          key={`existing-${base.name}`}
+                          label={base.name}
+                          onClick={() => handleBaseToggle(base.name)}
+                          color="success"
+                          variant={selectedBases.includes(base.name) ? 'filled' : 'outlined'}
+                          sx={{
+                            color: selectedBases.includes(base.name) ? colors.grey[100] : colors.greenAccent[400],
+                            borderColor: colors.greenAccent[400],
+                            '&:hover': {
+                              backgroundColor: selectedBases.includes(base.name)
+                                ? colors.greenAccent[600]
+                                : colors.greenAccent[100]
+                            }
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" sx={{ mb: 1, color: colors.grey[600], fontWeight: 'bold' }}>
+                      Candidate Bases
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {baseLocations.candidates.map((base) => (
+                        <Chip
+                          key={`candidate-${base.name}`}
+                          label={base.name}
+                          onClick={() => handleBaseToggle(base.name)}
+                          color={selectedBases.includes(base.name) ? 'primary' : 'default'}
+                          sx={{
+                            color: selectedBases.includes(base.name) ? colors.grey[100] : '#000000',
+                            backgroundColor: selectedBases.includes(base.name) 
+                              ? colors.blueAccent[700] 
+                              : '#ffffff',
+                            border: selectedBases.includes(base.name) ? 'none' : `1px solid ${colors.grey[300]}`,
+                            '&:hover': {
+                              backgroundColor: selectedBases.includes(base.name)
+                                ? colors.blueAccent[600]
+                                : colors.grey[100]
+                            }
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  </Box>
                 </Box>
                 {selectedBases.length === 0 && (
                   <Alert severity="warning" sx={{ mt: 1 }}>

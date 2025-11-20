@@ -6,16 +6,12 @@
 // under resource and geography changes. It highlights the chosen scenario and dominated options,
 // and allows weight sliders (population/SLA/cost) to auto-select an efficient point.
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   Box, 
   Paper, 
   Typography, 
   Slider,
-  Select, 
-  MenuItem, 
-  FormControl, 
-  InputLabel,
   CircularProgress,
   Alert,
   Grid,
@@ -31,15 +27,16 @@ const ParetoSensitivity = () => {
   const colors = tokens(theme.palette.mode);
   
   // Scenario parameters
-  const [baseLocations, setBaseLocations] = useState(['BANGOR', 'PORTLAND']);
+  const [baseLocations, setBaseLocations] = useState([]);
   const [radiusMin, setRadiusMin] = useState(20);
   const [radiusMax, setRadiusMax] = useState(100);
   const [radiusStep, setRadiusStep] = useState(10);
   const [slaMin, setSlaMin] = useState(10);
   const [slaMax, setSlaMax] = useState(30);
   const [slaStep, setSlaStep] = useState(5);
-  const [fleetSize, setFleetSize] = useState(3);
-  const [crewsPerVehicle, setCrewsPerVehicle] = useState(2);
+  const [fleetSize] = useState(3);
+  const [crewsPerVehicle] = useState(2);
+  const missionsPerVehiclePerDay = 3;
   
   // Weight sliders
   const [populationWeight, setPopulationWeight] = useState(0.33);
@@ -47,37 +44,37 @@ const ParetoSensitivity = () => {
   const [costWeight, setCostWeight] = useState(0.34);
   
   // Available bases
-  const [availableBases, setAvailableBases] = useState([]);
+  const [availableBases, setAvailableBases] = useState({ existing: [], candidates: [] });
+  const [basesInitialized, setBasesInitialized] = useState(false);
   
   // Data
   const [paretoData, setParetoData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
-  useEffect(() => {
-    fetchBaseLocations();
-  }, []);
-  
-  useEffect(() => {
-    if (availableBases.length > 0) {
-      fetchParetoData();
-    }
-  }, [baseLocations, radiusMin, radiusMax, radiusStep, slaMin, slaMax, slaStep, fleetSize, crewsPerVehicle, populationWeight, slaWeight, costWeight]);
-  
-  const fetchBaseLocations = async () => {
+  const fetchBaseLocations = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:5001/api/base_locations');
       const result = await response.json();
       
       if (result.status === 'success') {
-        setAvailableBases(result.data);
+        const existing = result.data.existing_bases || [];
+        const candidates = result.data.candidate_bases || [];
+        setAvailableBases({
+          existing,
+          candidates,
+        });
+        if (!basesInitialized && existing.length > 0) {
+          setBaseLocations(existing.map((base) => base.name));
+          setBasesInitialized(true);
+        }
       }
     } catch (err) {
       console.error('Failed to fetch base locations:', err);
     }
-  };
+  }, [basesInitialized]);
   
-  const fetchParetoData = async () => {
+  const fetchParetoData = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -105,6 +102,7 @@ const ParetoSensitivity = () => {
           sla_step: slaStep,
           fleet_size: fleetSize,
           crews_per_vehicle: crewsPerVehicle,
+          missions_per_vehicle_per_day: missionsPerVehiclePerDay,
           weights: normalizedWeights
         })
       });
@@ -127,7 +125,36 @@ const ParetoSensitivity = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    baseLocations,
+    radiusMin,
+    radiusMax,
+    radiusStep,
+    slaMin,
+    slaMax,
+    slaStep,
+    fleetSize,
+    crewsPerVehicle,
+    populationWeight,
+    slaWeight,
+    costWeight
+  ]);
+  
+  useEffect(() => {
+    fetchBaseLocations();
+  }, [fetchBaseLocations]);
+  
+  useEffect(() => {
+    const totalBases = (availableBases.existing?.length || 0) + (availableBases.candidates?.length || 0);
+    if (totalBases > 0 && baseLocations.length > 0) {
+      fetchParetoData();
+    }
+  }, [
+    fetchParetoData,
+    baseLocations,
+    availableBases.existing?.length,
+    availableBases.candidates?.length
+  ]);
   
   const handleBaseToggle = (baseName) => {
     if (baseLocations.includes(baseName)) {
@@ -205,13 +232,36 @@ const ParetoSensitivity = () => {
         <Grid container spacing={3}>
           {/* Base Locations */}
           <Grid item xs={12} md={6}>
-            <Typography variant="body1" sx={{ mb: 1, color: colors.grey[100] }}>
-              Base Locations
+            <Typography variant="body1" sx={{ mb: 1, color: colors.grey[100], fontWeight: 'bold' }}>
+              Existing Base Locations
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+              {availableBases.existing?.map((base) => (
+                <Chip
+                  key={`existing-${base.name}`}
+                  label={base.name}
+                  onClick={() => handleBaseToggle(base.name)}
+                  color="success"
+                  variant={baseLocations.includes(base.name) ? 'filled' : 'outlined'}
+                  sx={{
+                    color: baseLocations.includes(base.name) ? colors.grey[100] : colors.greenAccent[400],
+                    borderColor: colors.greenAccent[400],
+                    '&:hover': {
+                      backgroundColor: baseLocations.includes(base.name)
+                        ? colors.greenAccent[600]
+                        : colors.greenAccent[100]
+                    }
+                  }}
+                />
+              ))}
+            </Box>
+            <Typography variant="body1" sx={{ mb: 1, color: colors.grey[100], fontWeight: 'bold' }}>
+              Candidate Base Options
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {availableBases.map((base) => (
+              {availableBases.candidates?.map((base) => (
                 <Chip
-                  key={base.name}
+                  key={`candidate-${base.name}`}
                   label={base.name}
                   onClick={() => handleBaseToggle(base.name)}
                   color={baseLocations.includes(base.name) ? 'primary' : 'default'}

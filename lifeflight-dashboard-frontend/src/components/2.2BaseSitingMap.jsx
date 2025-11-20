@@ -15,7 +15,6 @@ import {
   FormControl, 
   InputLabel,
   TextField,
-  Button,
   CircularProgress,
   Alert,
   Grid,
@@ -33,7 +32,7 @@ const BaseSitingMap = () => {
   const colors = tokens(theme.palette.mode);
   
   // Scenario parameters
-  const [existingBases, setExistingBases] = useState(['BANGOR']);
+  const [existingBases, setExistingBases] = useState([]);
   const [candidateBase, setCandidateBase] = useState(null);
   const [serviceRadius, setServiceRadius] = useState(50);
   const [slaTarget, setSlaTarget] = useState(20);
@@ -41,7 +40,8 @@ const BaseSitingMap = () => {
   const [mapView, setMapView] = useState('before'); // 'before' or 'after'
   
   // Available bases
-  const [availableBases, setAvailableBases] = useState([]);
+  const [availableBases, setAvailableBases] = useState({ existing: [], candidates: [] });
+  const [basesInitialized, setBasesInitialized] = useState(false);
   
   // Data
   const [mapData, setMapData] = useState(null);
@@ -51,18 +51,27 @@ const BaseSitingMap = () => {
   // Debounce timer ref
   const debounceTimerRef = useRef(null);
   
-  const fetchBaseLocations = async () => {
+  const fetchBaseLocations = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:5001/api/base_locations');
       const result = await response.json();
       
       if (result.status === 'success') {
-        setAvailableBases(result.data);
+        const existing = result.data.existing_bases || [];
+        const candidates = result.data.candidate_bases || [];
+        setAvailableBases({
+          existing,
+          candidates,
+        });
+        if (!basesInitialized && existing.length > 0) {
+          setExistingBases(existing.map((base) => base.name));
+          setBasesInitialized(true);
+        }
       }
     } catch (err) {
       console.error('Failed to fetch base locations:', err);
     }
-  };
+  }, [basesInitialized]);
   
   const fetchMapData = useCallback(async () => {
     setLoading(true);
@@ -105,7 +114,7 @@ const BaseSitingMap = () => {
   
   useEffect(() => {
     fetchBaseLocations();
-  }, []);
+  }, [fetchBaseLocations]);
   
   useEffect(() => {
     // Clear previous timer
@@ -114,7 +123,8 @@ const BaseSitingMap = () => {
     }
     
     // Only fetch if we have the necessary data
-    if (availableBases.length > 0 && existingBases.length > 0) {
+    const totalBases = (availableBases.existing?.length || 0) + (availableBases.candidates?.length || 0);
+    if (totalBases > 0 && existingBases.length > 0) {
       // Debounce: wait 800ms before making the request (increased from 500ms)
       debounceTimerRef.current = setTimeout(() => {
         fetchMapData();
@@ -127,7 +137,16 @@ const BaseSitingMap = () => {
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [existingBases, candidateBase, serviceRadius, slaTarget, coverageThreshold, availableBases.length, fetchMapData]);
+  }, [
+    existingBases,
+    candidateBase,
+    serviceRadius,
+    slaTarget,
+    coverageThreshold,
+    availableBases.existing?.length,
+    availableBases.candidates?.length,
+    fetchMapData
+  ]);
   
   const handleBaseToggle = (baseName) => {
     if (existingBases.includes(baseName)) {
@@ -138,7 +157,7 @@ const BaseSitingMap = () => {
   };
   
   const handleCandidateBaseSelect = (baseName) => {
-    const base = availableBases.find(b => b.name === baseName);
+    const base = availableBases.candidates.find(b => b.name === baseName);
     if (base) {
       setCandidateBase(base);
     }
@@ -162,13 +181,36 @@ const BaseSitingMap = () => {
         <Grid container spacing={3}>
           {/* Existing Bases */}
           <Grid item xs={12} md={6}>
-            <Typography variant="body1" sx={{ mb: 1, color: colors.grey[100] }}>
+            <Typography variant="body1" sx={{ mb: 1, color: colors.grey[100], fontWeight: 'bold' }}>
               Existing Base Locations
             </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {availableBases.map((base) => (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+              {availableBases.existing.map((base) => (
                 <Chip
-                  key={base.name}
+                  key={`existing-${base.name}`}
+                  label={base.name}
+                  onClick={() => handleBaseToggle(base.name)}
+                  color="success"
+                  variant={existingBases.includes(base.name) ? 'filled' : 'outlined'}
+                  sx={{
+                    color: existingBases.includes(base.name) ? colors.grey[100] : colors.greenAccent[400],
+                    borderColor: colors.greenAccent[400],
+                    '&:hover': {
+                      backgroundColor: existingBases.includes(base.name)
+                        ? colors.greenAccent[600]
+                        : colors.greenAccent[100]
+                    }
+                  }}
+                />
+              ))}
+            </Box>
+            <Typography variant="body1" sx={{ mb: 1, color: colors.grey[100], fontWeight: 'bold' }}>
+              Candidate Base Options
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {availableBases.candidates.map((base) => (
+                <Chip
+                  key={`candidate-${base.name}`}
                   label={base.name}
                   onClick={() => handleBaseToggle(base.name)}
                   color={existingBases.includes(base.name) ? 'primary' : 'default'}
@@ -216,7 +258,7 @@ const BaseSitingMap = () => {
                 }}
               >
                 <MenuItem value="">None</MenuItem>
-                {availableBases
+                {availableBases.candidates
                   .filter(b => !existingBases.includes(b.name))
                   .map((base) => (
                     <MenuItem key={base.name} value={base.name}>

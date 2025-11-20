@@ -405,6 +405,7 @@ def get_base_siting_analysis(
     sla_target_minutes: int = 20,
     fleet_size: int = 3,
     crews_per_vehicle: int = 2,
+    missions_per_vehicle_per_day: int = 3,
     coverage_threshold_minutes: int = 20
 ) -> Dict[str, Any]:
     """
@@ -437,13 +438,15 @@ def get_base_siting_analysis(
         city_coordinates = {}
     
     # Get base locations
-    all_bases = get_base_locations()
+    location_data = get_base_locations()
+    all_bases = location_data.get('existing_bases', []) + location_data.get('candidate_bases', [])
     existing_base_locations = [b for b in all_bases if b['name'] in existing_bases]
     
     # Simulate "before" scenario
     before_scenario = simulate_scenario(
         fleet_size=fleet_size,
         crews_per_vehicle=crews_per_vehicle,
+        missions_per_vehicle_per_day=missions_per_vehicle_per_day,
         base_locations=existing_bases,
         service_radius_miles=service_radius_miles,
         sla_target_minutes=sla_target_minutes

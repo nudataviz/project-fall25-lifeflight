@@ -19,6 +19,7 @@ from utils.demographics_1_3 import get_demographics_elasticity
 from utils.event_impact_1_4 import get_event_impact_analysis, get_all_events
 from utils.weather_risk_2_4 import get_weather_risk_analysis
 from utils.scenario_whatif_2_1 import simulate_scenario, get_base_locations, compare_scenarios
+from utils.scenario.get_boxplot_2_1 import get_boxplot
 from utils.pareto_sensitivity_2_3 import get_pareto_sensitivity_analysis
 from utils.base_siting_2_2 import get_base_siting_analysis
 from utils.kpi_bullets_4_1 import get_kpi_bullets
@@ -674,6 +675,7 @@ def simulate_scenario_api():
         fleet_size = int(data.get('fleet_size', 3))
         crews_per_vehicle = int(data.get('crews_per_vehicle', 2))
         base_locations = data.get('base_locations', ['BANGOR'])
+        missions_per_vehicle_per_day = int(data.get('missions_per_vehicle_per_day', 3))
         service_radius_miles = float(data.get('service_radius_miles', 50.0))
         sla_target_minutes = int(data.get('sla_target_minutes', 20))
         
@@ -703,6 +705,7 @@ def simulate_scenario_api():
         
         result = simulate_scenario(
             fleet_size=fleet_size,
+            missions_per_vehicle_per_day=missions_per_vehicle_per_day,
             crews_per_vehicle=crews_per_vehicle,
             base_locations=base_locations,
             service_radius_miles=service_radius_miles,
@@ -725,6 +728,23 @@ def simulate_scenario_api():
             'message': f'Failed to simulate scenario: {str(e)}'
         }), 500
 
+
+@app.route('/api/boxplot', methods=['GET'])
+def get_boxplot_api():
+    """
+    Get boxplot data 
+    """
+    try:
+        result = get_boxplot()
+        return jsonify({
+            'status': 'success',
+            'data': result
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Failed to get boxplot: {str(e)}'
+        }), 500
 
 @app.route('/api/base_locations', methods=['GET'])
 def get_base_locations_api():
@@ -785,6 +805,7 @@ def compare_scenarios_api():
         for scenario_params in scenarios_list:
             result = simulate_scenario(
                 fleet_size=int(scenario_params.get('fleet_size', 3)),
+                missions_per_vehicle_per_day=int(scenario_params.get('missions_per_vehicle_per_day', 3)),
                 crews_per_vehicle=int(scenario_params.get('crews_per_vehicle', 2)),
                 base_locations=scenario_params.get('base_locations', ['BANGOR']),
                 service_radius_miles=float(scenario_params.get('service_radius_miles', 50.0)),
@@ -832,7 +853,7 @@ def get_pareto_sensitivity_api():
         else:
             data = request.args.to_dict()
         
-        base_locations = data.get('base_locations')
+        base_locations = data.get('base_locations', ['BANGOR', 'PORTLAND'])
         if isinstance(base_locations, str):
             # Parse comma-separated string
             base_locations = [b.strip() for b in base_locations.split(',')]
@@ -845,6 +866,7 @@ def get_pareto_sensitivity_api():
         sla_step = int(data.get('sla_step', 5))
         fleet_size = int(data.get('fleet_size', 3))
         crews_per_vehicle = int(data.get('crews_per_vehicle', 2))
+        missions_per_vehicle_per_day = int(data.get('missions_per_vehicle_per_day', 3))
         
         weights = data.get('weights')
         if isinstance(weights, dict):
@@ -863,6 +885,7 @@ def get_pareto_sensitivity_api():
             sla_step=sla_step,
             fleet_size=fleet_size,
             crews_per_vehicle=crews_per_vehicle,
+            missions_per_vehicle_per_day=missions_per_vehicle_per_day,
             weights=weights
         )
         

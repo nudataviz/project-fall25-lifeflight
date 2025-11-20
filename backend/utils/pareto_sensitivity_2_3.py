@@ -23,7 +23,8 @@ def generate_scenario_grid(
     radius_range: List[float],
     sla_range: List[int],
     fleet_size: int = 3,
-    crews_per_vehicle: int = 2
+    crews_per_vehicle: int = 2,
+    missions_per_vehicle_per_day: int = 3
 ) -> List[Dict[str, Any]]:
     """
     Generate a grid of scenarios by varying radius and SLA targets.
@@ -46,6 +47,7 @@ def generate_scenario_grid(
                 result = simulate_scenario(
                     fleet_size=fleet_size,
                     crews_per_vehicle=crews_per_vehicle,
+                    missions_per_vehicle_per_day=missions_per_vehicle_per_day,
                     base_locations=base_locations,
                     service_radius_miles=radius,
                     sla_target_minutes=sla
@@ -245,6 +247,7 @@ def get_pareto_sensitivity_analysis(
     sla_step: int = 5,
     fleet_size: int = 3,
     crews_per_vehicle: int = 2,
+    missions_per_vehicle_per_day: int = 3,
     weights: Optional[Dict[str, float]] = None
 ) -> Dict[str, Any]:
     """
@@ -267,7 +270,8 @@ def get_pareto_sensitivity_analysis(
     """
     # Default base locations
     if base_locations is None:
-        default_bases = get_base_locations()
+        location_data = get_base_locations()
+        default_bases = location_data.get('existing_bases', []) + location_data.get('candidate_bases', [])
         base_locations = [b['name'] for b in default_bases[:3]]  # Use first 3 bases
     
     # Generate radius and SLA ranges
@@ -280,7 +284,8 @@ def get_pareto_sensitivity_analysis(
         radius_range=radius_range,
         sla_range=sla_range,
         fleet_size=fleet_size,
-        crews_per_vehicle=crews_per_vehicle
+        crews_per_vehicle=crews_per_vehicle,
+        missions_per_vehicle_per_day=missions_per_vehicle_per_day
     )
     
     if len(all_scenarios) == 0:

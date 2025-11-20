@@ -4,6 +4,7 @@ import WhatIfScenarioPanel from "../../components/2.1WhatIfScenarioPanel";
 import BaseSitingMap from "../../components/2.2BaseSitingMap";
 import ParetoSensitivity from "../../components/2.3ParetoSensitivity";
 import WeatherRiskBoxes from "../../components/2.4WeatherRiskBoxes";
+import BoxPlot from "../../components/BoxPlot";
 
 export default function ScenarioModeling() {
   return (
@@ -14,11 +15,15 @@ export default function ScenarioModeling() {
       <Box mt="20px">
         <WhatIfScenarioPanel />
       </Box>
-      
+      {/* Chart: Box Plot */}
+      <Box mt="20px">
+        <BoxPlot />
+      </Box>
       {/* Chart 2.2: Base Siting Coverage Map (includes demand heatmap overlay) */}
       <Box mt="100px">
         <BaseSitingMap />
       </Box>
+
       
       {/* Chart 2.3: Service Area Sensitivity */}
       <Box mt="100px">

@@ -16,47 +16,74 @@ from typing import Dict, List, Optional, Any
 from pathlib import Path
 
 
-def get_base_locations() -> List[Dict[str, Any]]:
+def get_base_locations() -> Dict[str, List[Dict[str, Any]]]:
     """
-    Get available base locations.
+    Get available base locations grouped by current and candidate bases.
     
     Returns:
-        List of base locations with coordinates
+        Dict with lists of existing and candidate base location coordinates.
     """
     backend_dir = Path(__file__).parent.parent
     
     # Load city coordinates
-    city_coords_path = backend_dir / 'data' / 'city_coordinates.json'
+    city_coords_path = backend_dir / 'data' / 'maine_city_coordinates.json'
+    
+    existed_bases = ['BANGOR', 'LEWISTON', 'SANFORD']
+    top_10_cities = [
+        'ROCKPORT', 'AUGUSTA', 'BELFAST', 'WATERVILLE',
+        'SKOWHEGAN', 'BRIDGTON', 'PRESQUE ISLE', 'PORTLAND',
+        'BIDDEFORD', 'AUBURN'
+    ]
+    
+    def build_base_list(cities: List[str], coords_lookup: Dict[str, List[float]]) -> List[Dict[str, Any]]:
+        base_list: List[Dict[str, Any]] = []
+        for city in cities:
+            if city not in coords_lookup:
+                continue
+            coords = coords_lookup[city]
+            base_list.append({
+                'name': city,
+                'latitude': coords[0],
+                'longitude': coords[1]
+            })
+        return base_list
     
     if city_coords_path.exists():
         import json
         with open(city_coords_path, 'r') as f:
             city_coords = json.load(f)
         
-        # Common base locations (major cities)
-        common_bases = ['BANGOR', 'PORTLAND', 'LEWISTON', 'AUBURN', 'BIDDEFORD', 'SANFORD']
-        
-        bases = []
-        for city in common_bases:
-            if city in city_coords:
-                coords = city_coords[city]
-                bases.append({
-                    'name': city,
-                    'latitude': coords[0],
-                    'longitude': coords[1]
-                })
-        
-        return bases
+        existing = build_base_list(existed_bases, city_coords)
+        candidates = build_base_list(
+            [city for city in top_10_cities if city not in existed_bases],
+            city_coords
+        )
+    else:
+        # Default base locations (Maine major cities)
+        default_coords = {
+            'BANGOR': (44.8016, -68.7713),
+            'PORTLAND': (43.6591, -70.2568),
+            'LEWISTON': (44.1004, -70.2148),
+            'AUBURN': (44.0979, -70.2311),
+            'BIDDEFORD': (43.4926, -70.4534),
+            'SANFORD': (43.4394, -70.7742),
+            'ROCKPORT': (44.1879, -69.0767),
+            'AUGUSTA': (44.3106, -69.7795),
+            'BELFAST': (44.4259, -69.0064),
+            'WATERVILLE': (44.5520, -69.6317),
+            'SKOWHEGAN': (44.7651, -69.7194),
+            'PRESQUE ISLE': (46.6812, -68.0159)
+        }
+        existing = build_base_list(existed_bases, default_coords)
+        candidates = build_base_list(
+            [city for city in top_10_cities if city not in existed_bases],
+            default_coords
+        )
     
-    # Default base locations (Maine major cities)
-    return [
-        {'name': 'BANGOR', 'latitude': 44.8016, 'longitude': -68.7713},
-        {'name': 'PORTLAND', 'latitude': 43.6591, 'longitude': -70.2568},
-        {'name': 'LEWISTON', 'latitude': 44.1004, 'longitude': -70.2148},
-        {'name': 'AUBURN', 'latitude': 44.0979, 'longitude': -70.2311},
-        {'name': 'BIDDEFORD', 'latitude': 43.4926, 'longitude': -70.4534},
-        {'name': 'SANFORD', 'latitude': 43.4394, 'longitude': -70.7742}
-    ]
+    return {
+        'existing_bases': existing,
+        'candidate_bases': candidates
+    }
 
 
 def calculate_base_coverage(
@@ -132,7 +159,7 @@ def estimate_mission_capacity(
     # Crew availability factor (simplified: assume crews can cover operational needs)
     crew_factor = min(1.0, crews_per_vehicle / 2.0)  # Assume 2 crews needed for 24/7 coverage
     
-    capacity = fleet_size * avg_missions_per_vehicle_per_day * operational_days_per_year * crew_factor
+    capacity = fleet_size * avg_missions_per_vehicle_per_day * operational_days_per_year #* crew_factor
     
     return float(capacity)
 
@@ -237,6 +264,7 @@ def estimate_unmet_demand(
     # Adjust historical missions by coverage rate
     covered_demand = historical_missions * coverage_rate
     
+    print(f"covered_demand: {covered_demand}, historical_missions: {historical_missions}, capacity: {capacity}, coverage_rate: {coverage_rate}")
     # Unmet demand is the difference between covered demand and capacity
     unmet = max(0, covered_demand - capacity)
     unmet_rate = (unmet / covered_demand * 100) if covered_demand > 0 else 0.0
@@ -289,6 +317,7 @@ def estimate_cost(
 def simulate_scenario(
     fleet_size: int,
     crews_per_vehicle: int,
+    missions_per_vehicle_per_day: int,
     base_locations: List[str],
     service_radius_miles: float,
     sla_target_minutes: int,
@@ -314,7 +343,7 @@ def simulate_scenario(
     
     # Load city coordinates directly
     backend_dir = Path(__file__).parent.parent
-    city_coords_path = backend_dir / 'data' / 'city_coordinates.json'
+    city_coords_path = backend_dir / 'data' / 'maine_city_coordinates.json'
     
     if city_coords_path.exists():
         with open(city_coords_path, 'r') as f:
@@ -328,7 +357,8 @@ def simulate_scenario(
     
     # Get base coordinates
     if base_coordinates is None:
-        all_bases = get_base_locations()
+        location_data = get_base_locations()
+        all_bases = location_data.get('existing_bases', []) + location_data.get('candidate_bases', [])
         base_coords = [b for b in all_bases if b['name'] in base_locations]
     else:
         base_coords = base_coordinates
@@ -344,16 +374,20 @@ def simulate_scenario(
     # Calculate historical mission count (annual)
     df['tdate'] = pd.to_datetime(df['tdate'], errors='coerce')
     df['year'] = df['tdate'].dt.year
+
+    # last year's missions
+    last_year = df[df['year'] == df['year'].max()]
+    last_year_missions = len(last_year)
     historical_missions = len(df)  # Total missions in dataset
     
     # Estimate capacity
-    capacity = estimate_mission_capacity(fleet_size, crews_per_vehicle)
+    capacity = estimate_mission_capacity(fleet_size, crews_per_vehicle, missions_per_vehicle_per_day)
     
     # Calculate SLA attainment
     sla_metrics = calculate_sla_attainment(list(all_covered_cities), df, sla_target_minutes)
     
     # Estimate unmet demand
-    unmet_metrics = estimate_unmet_demand(historical_missions, capacity, coverage_rate)
+    unmet_metrics = estimate_unmet_demand(last_year_missions, capacity, coverage_rate)
     
     # Estimate cost
     cost_metrics = estimate_cost(fleet_size, crews_per_vehicle, len(base_locations))
