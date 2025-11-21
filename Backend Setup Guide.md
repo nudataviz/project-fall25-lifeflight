@@ -67,17 +67,6 @@ Test endpoint:
 http://localhost:5001/api/test
 ```
 
------
-
-## Available Endpoints
-
-  - `GET /api/test` — Test server status
-  - `GET /api/indicators` — Dashboard indicators
-  - `GET /api/veh_count` — Vehicle count statistics
-  - `GET /api/hourly_departure` — Hourly departure density
-  - `GET /api/heatmap` — Heatmap HTML output
-
------
 
 ## Project Structure
 
