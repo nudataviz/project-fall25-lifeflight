@@ -516,11 +516,9 @@ const WhatIfScenarioPanel = () => {
                       Estimated Annual Capacity
                     </Typography>
                     <Typography variant="body2" sx={{ color: '#000000', mt: 1 }}>
-                      {/* 去年的任务数量 */}
                       Last Year Missions: {scenarioResult.kpis.missions.last_year_missions.toLocaleString()}
-                      <br />
-                      {/* 总任务数量 */}
-                      Historical total missions: {scenarioResult.kpis.missions.historical_annual.toLocaleString()}
+                      {/* <br />
+                      Historical total missions: {scenarioResult.kpis.missions.historical_annual.toLocaleString()} */}
                     </Typography>
                   </Paper>
                 </Grid>
