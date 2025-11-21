@@ -32,20 +32,6 @@ The application will be available at:
 http://localhost:3000
 ```
 
----
-
-## Backend Connection
-
-The frontend expects the backend API to run locally on **port 5001**.
-
-If your backend uses a different port, update the API base URLs in:
-
-- `src/scenes/dashboard/index.jsx`
-- `src/components/LineChart.jsx`
-- `src/components/HistogramChart.jsx`
-- `src/components/HeatMap.jsx`
-
----
 
 ## Project Structure
 
