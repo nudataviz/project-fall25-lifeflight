@@ -256,7 +256,7 @@ const DemographicsElasticity = () => {
                   <Typography variant="h6" sx={{ color: colors.grey[100], mb: 1 }}>
                     R-squared
                   </Typography>
-                  <Typography variant="h4" sx={{ color: colors.greenAccent[400], fontWeight: 'bold' }}>
+                  <Typography variant="h4" sx={{ color: colors.greenAccent[100], fontWeight: 'bold' }}>
                     {data.regression_results.r_squared.toFixed(4)}
                   </Typography>
                 </Paper>
@@ -407,7 +407,6 @@ const DemographicsElasticity = () => {
                     },
                     tooltip: {
                       container: {
-                        background: colors.primary[500],
                         color: colors.grey[100]
                       }
                     }
@@ -419,7 +418,7 @@ const DemographicsElasticity = () => {
           
           {/* Marginal Effects Tab */}
           {tabValue === 1 && marginalEffectsData && marginalEffectsData.length > 0 && (
-            <Paper sx={{ p: 3, backgroundColor: colors.primary[400], height: "500px" }}>
+            <Paper sx={{ p: 3, backgroundColor: colors.primary[400], minHeight: "500px" }}>
               <Typography variant="h5" sx={{ mb: 2, color: colors.grey[100] }}>
                 Marginal Effects by Cohort
               </Typography>
@@ -498,7 +497,7 @@ const DemographicsElasticity = () => {
                 <Grid container spacing={2}>
                   {marginalEffectsData.map((item) => (
                     <Grid item xs={12} md={4} key={item.cohort}>
-                      <Paper sx={{ p: 2, backgroundColor: colors.primary[500] }}>
+                      <Paper sx={{ p: 2, backgroundColor: colors.grey[1000] }}>
                         <Typography variant="body1" sx={{ color: colors.grey[100], fontWeight: 'bold' }}>
                           {item.cohort}
                         </Typography>

@@ -476,7 +476,7 @@ const ParetoSensitivity = () => {
                   },
                   tooltip: {
                     container: {
-                      background: colors.primary[500],
+                      // background: colors.primary[500],
                       color: colors.grey[100]
                     }
                   }
@@ -530,7 +530,7 @@ const ParetoSensitivity = () => {
           
           {/* Metadata */}
           {paretoData.metadata && (
-            <Paper sx={{ p: 2, mt: 2, backgroundColor: colors.primary[500] }}>
+            <Paper sx={{ p: 2, mt: 2, backgroundColor: colors.primary[400] }}>
               <Typography variant="body2" sx={{ color: colors.grey[300] }}>
                 Analyzed {paretoData.metadata.n_scenarios} scenarios | 
                 {paretoData.metadata.n_pareto} Pareto optimal | 

@@ -301,7 +301,7 @@ const WeatherRiskBoxes = () => {
                     },
                     tooltip: {
                       container: {
-                        background: colors.grey[900],
+                        // background: colors.grey[900],
                         color: colors.grey[100]
                       }
                     }
