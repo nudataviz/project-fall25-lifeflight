@@ -403,6 +403,7 @@ def simulate_scenario(
         'kpis': {
             'missions': {
                 'historical_annual': historical_missions,
+                'last_year_missions': last_year_missions,
                 'estimated_capacity': capacity,
                 'covered_demand': unmet_metrics['covered_demand']
             },
