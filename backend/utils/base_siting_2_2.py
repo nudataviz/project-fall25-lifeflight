@@ -389,12 +389,17 @@ def calculate_sla_lift(
     after_cost = after_scenario['kpis']['cost']['total_cost']
     incremental_cost = after_cost - before_cost
     
+    # Calculate cost per SLA point, use None if sla_lift is 0 or negative (invalid)
+    cost_per_sla_point = None
+    if sla_lift > 0:
+        cost_per_sla_point = float(incremental_cost / sla_lift)
+    
     return {
         'sla_lift_absolute': float(sla_lift),
         'sla_lift_percent': float(sla_lift_percent),
         'coverage_lift': float(coverage_lift),
         'incremental_cost': float(incremental_cost),
-        'cost_per_sla_point': float(incremental_cost / sla_lift) if sla_lift > 0 else float('inf')
+        'cost_per_sla_point': cost_per_sla_point
     }
 
 
@@ -465,6 +470,7 @@ def get_base_siting_analysis(
         after_scenario = simulate_scenario(
             fleet_size=fleet_size,
             crews_per_vehicle=crews_per_vehicle,
+            missions_per_vehicle_per_day=missions_per_vehicle_per_day,
             base_locations=after_bases,
             service_radius_miles=service_radius_miles,
             sla_target_minutes=sla_target_minutes

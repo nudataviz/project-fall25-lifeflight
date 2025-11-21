@@ -37,6 +37,9 @@ const BaseSitingMap = () => {
   const [serviceRadius, setServiceRadius] = useState(50);
   const [slaTarget, setSlaTarget] = useState(20);
   const [coverageThreshold, setCoverageThreshold] = useState(20);
+  const [fleetSize, setFleetSize] = useState(3);
+  const [crewsPerVehicle, setCrewsPerVehicle] = useState(2);
+  const [missionsPerVehiclePerDay, setMissionsPerVehiclePerDay] = useState(3);
   const [mapView, setMapView] = useState('before'); // 'before' or 'after'
   
   // Available bases
@@ -88,7 +91,10 @@ const BaseSitingMap = () => {
           candidate_base: candidateBase,
           service_radius_miles: serviceRadius,
           sla_target_minutes: slaTarget,
-          coverage_threshold_minutes: coverageThreshold
+          coverage_threshold_minutes: coverageThreshold,
+          fleet_size: fleetSize,
+          crews_per_vehicle: crewsPerVehicle,
+          missions_per_vehicle_per_day: missionsPerVehiclePerDay
         })
       });
       
@@ -110,7 +116,7 @@ const BaseSitingMap = () => {
     } finally {
       setLoading(false);
     }
-  }, [existingBases, candidateBase, serviceRadius, slaTarget, coverageThreshold]);
+  }, [existingBases, candidateBase, serviceRadius, slaTarget, coverageThreshold, fleetSize, crewsPerVehicle, missionsPerVehiclePerDay]);
   
   useEffect(() => {
     fetchBaseLocations();
@@ -143,6 +149,9 @@ const BaseSitingMap = () => {
     serviceRadius,
     slaTarget,
     coverageThreshold,
+    fleetSize,
+    crewsPerVehicle,
+    missionsPerVehiclePerDay,
     availableBases.existing?.length,
     availableBases.candidates?.length,
     fetchMapData
@@ -344,6 +353,81 @@ const BaseSitingMap = () => {
               }}
             />
           </Grid>
+          
+          <Grid item xs={12} md={3}>
+            <TextField
+              fullWidth
+              type="number"
+              label="Fleet Size"
+              value={fleetSize}
+              onChange={(e) => setFleetSize(parseInt(e.target.value) || 1)}
+              inputProps={{ min: 1, max: 20 }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  color: colors.grey[100],
+                  '& fieldset': {
+                    borderColor: colors.grey[100],
+                  },
+                  '&:hover fieldset': {
+                    borderColor: colors.grey[100],
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: colors.grey[100],
+                },
+              }}
+            />
+          </Grid>
+          
+          <Grid item xs={12} md={3}>
+            <TextField
+              fullWidth
+              type="number"
+              label="Crews per Vehicle"
+              value={crewsPerVehicle}
+              onChange={(e) => setCrewsPerVehicle(parseInt(e.target.value) || 1)}
+              inputProps={{ min: 1, max: 10 }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  color: colors.grey[100],
+                  '& fieldset': {
+                    borderColor: colors.grey[100],
+                  },
+                  '&:hover fieldset': {
+                    borderColor: colors.grey[100],
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: colors.grey[100],
+                },
+              }}
+            />
+          </Grid>
+          
+          <Grid item xs={12} md={3}>
+            <TextField
+              fullWidth
+              type="number"
+              label="Missions per Vehicle per Day"
+              value={missionsPerVehiclePerDay}
+              onChange={(e) => setMissionsPerVehiclePerDay(parseInt(e.target.value) || 1)}
+              inputProps={{ min: 1, max: 20 }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  color: colors.grey[100],
+                  '& fieldset': {
+                    borderColor: colors.grey[100],
+                  },
+                  '&:hover fieldset': {
+                    borderColor: colors.grey[100],
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: colors.grey[100],
+                },
+              }}
+            />
+          </Grid>
         </Grid>
       </Paper>
       
@@ -449,7 +533,9 @@ const BaseSitingMap = () => {
                         Coverage Rate
                       </Typography>
                       <Typography variant="h6" sx={{ color: colors.blueAccent[400], fontWeight: 'bold' }}>
-                        {mapData.before_scenario.kpis.coverage.coverage_rate.toFixed(1)}%
+                        {mapData.before_scenario?.kpis?.coverage?.coverage_rate != null 
+                          ? `${mapData.before_scenario.kpis.coverage.coverage_rate.toFixed(1)}%`
+                          : 'N/A'}
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
@@ -457,7 +543,9 @@ const BaseSitingMap = () => {
                         SLA Attainment
                       </Typography>
                       <Typography variant="h6" sx={{ color: colors.greenAccent[400], fontWeight: 'bold' }}>
-                        {mapData.before_scenario.kpis.sla_attainment.rate_percent.toFixed(1)}%
+                        {mapData.before_scenario?.kpis?.sla_attainment?.rate_percent != null
+                          ? `${mapData.before_scenario.kpis.sla_attainment.rate_percent.toFixed(1)}%`
+                          : 'N/A'}
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
@@ -465,7 +553,7 @@ const BaseSitingMap = () => {
                         Cities Covered
                       </Typography>
                       <Typography variant="h6" sx={{ color: colors.grey[100], fontWeight: 'bold' }}>
-                        {mapData.before_scenario.kpis.coverage.cities_covered}
+                        {mapData.before_scenario?.kpis?.coverage?.cities_covered ?? 'N/A'}
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
@@ -473,7 +561,9 @@ const BaseSitingMap = () => {
                         Annual Cost
                       </Typography>
                       <Typography variant="h6" sx={{ color: colors.yellowAccent?.[400] || colors.blueAccent[400], fontWeight: 'bold' }}>
-                        ${(mapData.before_scenario.kpis.cost.total_cost / 1000000).toFixed(2)}M
+                        {mapData.before_scenario?.kpis?.cost?.total_cost != null
+                          ? `$${(mapData.before_scenario.kpis.cost.total_cost / 1000000).toFixed(2)}M`
+                          : 'N/A'}
                       </Typography>
                     </Grid>
                   </Grid>
@@ -494,7 +584,9 @@ const BaseSitingMap = () => {
                         Coverage Rate
                       </Typography>
                       <Typography variant="h6" sx={{ color: colors.blueAccent[400], fontWeight: 'bold' }}>
-                        {mapData.after_scenario.kpis.coverage.coverage_rate.toFixed(1)}%
+                        {mapData.after_scenario?.kpis?.coverage?.coverage_rate != null
+                          ? `${mapData.after_scenario.kpis.coverage.coverage_rate.toFixed(1)}%`
+                          : 'N/A'}
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
@@ -502,7 +594,9 @@ const BaseSitingMap = () => {
                         SLA Attainment
                       </Typography>
                       <Typography variant="h6" sx={{ color: colors.greenAccent[400], fontWeight: 'bold' }}>
-                        {mapData.after_scenario.kpis.sla_attainment.rate_percent.toFixed(1)}%
+                        {mapData.after_scenario?.kpis?.sla_attainment?.rate_percent != null
+                          ? `${mapData.after_scenario.kpis.sla_attainment.rate_percent.toFixed(1)}%`
+                          : 'N/A'}
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
@@ -510,7 +604,7 @@ const BaseSitingMap = () => {
                         Cities Covered
                       </Typography>
                       <Typography variant="h6" sx={{ color: colors.grey[100], fontWeight: 'bold' }}>
-                        {mapData.after_scenario.kpis.coverage.cities_covered}
+                        {mapData.after_scenario?.kpis?.coverage?.cities_covered ?? 'N/A'}
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
@@ -518,7 +612,9 @@ const BaseSitingMap = () => {
                         Annual Cost
                       </Typography>
                       <Typography variant="h6" sx={{ color: colors.yellowAccent?.[400] || colors.blueAccent[400], fontWeight: 'bold' }}>
-                        ${(mapData.after_scenario.kpis.cost.total_cost / 1000000).toFixed(2)}M
+                        {mapData.after_scenario?.kpis?.cost?.total_cost != null
+                          ? `$${(mapData.after_scenario.kpis.cost.total_cost / 1000000).toFixed(2)}M`
+                          : 'N/A'}
                       </Typography>
                     </Grid>
                   </Grid>
@@ -541,7 +637,9 @@ const BaseSitingMap = () => {
                             SLA Lift (Absolute)
                           </Typography>
                           <Typography variant="h5" sx={{ color: colors.grey[100], fontWeight: 'bold' }}>
-                            +{mapData.sla_lift.sla_lift_absolute.toFixed(1)}%
+                            {mapData.sla_lift?.sla_lift_absolute != null
+                              ? `+${mapData.sla_lift.sla_lift_absolute.toFixed(1)}%`
+                              : 'N/A'}
                           </Typography>
                         </CardContent>
                       </Card>
@@ -553,7 +651,9 @@ const BaseSitingMap = () => {
                             Coverage Lift
                           </Typography>
                           <Typography variant="h5" sx={{ color: colors.grey[100], fontWeight: 'bold' }}>
-                            +{mapData.sla_lift.coverage_lift.toFixed(1)}%
+                            {mapData.sla_lift?.coverage_lift != null
+                              ? `+${mapData.sla_lift.coverage_lift.toFixed(1)}%`
+                              : 'N/A'}
                           </Typography>
                         </CardContent>
                       </Card>
@@ -565,7 +665,9 @@ const BaseSitingMap = () => {
                             Incremental Cost
                           </Typography>
                           <Typography variant="h5" sx={{ color: colors.grey[100], fontWeight: 'bold' }}>
-                            ${(mapData.sla_lift.incremental_cost / 1000000).toFixed(2)}M
+                            {mapData.sla_lift?.incremental_cost != null
+                              ? `$${(mapData.sla_lift.incremental_cost / 1000000).toFixed(2)}M`
+                              : 'N/A'}
                           </Typography>
                         </CardContent>
                       </Card>
@@ -577,7 +679,11 @@ const BaseSitingMap = () => {
                             Cost per SLA Point
                           </Typography>
                           <Typography variant="h5" sx={{ color: colors.grey[100], fontWeight: 'bold' }}>
-                            ${mapData.sla_lift.cost_per_sla_point < 1000000 ? mapData.sla_lift.cost_per_sla_point.toFixed(0) : (mapData.sla_lift.cost_per_sla_point / 1000000).toFixed(2) + 'M'}
+                            {mapData.sla_lift.cost_per_sla_point === null || mapData.sla_lift.cost_per_sla_point === undefined
+                              ? 'N/A'
+                              : `$${mapData.sla_lift.cost_per_sla_point < 1000000 
+                                ? mapData.sla_lift.cost_per_sla_point.toFixed(0) 
+                                : (mapData.sla_lift.cost_per_sla_point / 1000000).toFixed(2) + 'M'}`}
                           </Typography>
                         </CardContent>
                       </Card>

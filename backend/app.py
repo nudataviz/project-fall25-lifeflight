@@ -929,6 +929,7 @@ def get_base_siting_api():
         sla_target_minutes = int(data.get('sla_target_minutes', 20))
         fleet_size = int(data.get('fleet_size', 3))
         crews_per_vehicle = int(data.get('crews_per_vehicle', 2))
+        missions_per_vehicle_per_day = int(data.get('missions_per_vehicle_per_day', 3))
         coverage_threshold_minutes = int(data.get('coverage_threshold_minutes', 20))
         
         result = get_base_siting_analysis(
@@ -938,6 +939,7 @@ def get_base_siting_api():
             sla_target_minutes=sla_target_minutes,
             fleet_size=fleet_size,
             crews_per_vehicle=crews_per_vehicle,
+            missions_per_vehicle_per_day=missions_per_vehicle_per_day,
             coverage_threshold_minutes=coverage_threshold_minutes
         )
         

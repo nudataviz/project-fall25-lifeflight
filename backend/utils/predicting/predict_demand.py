@@ -360,16 +360,14 @@ def prophet_predict(data: pd.DataFrame, freq: str = 'M',
 
 def prepare_prophet_data(backend_dir: Path) -> pd.DataFrame:
     """
-    准备 Prophet 模型所需的数据（月度数据 + 额外变量）
+    Prepare data for Prophet model (monthly data + extra variables)
     
-    返回:
+    Returns:
     - DataFrame with columns: date, count, and optional extra variables
     """
-    # 读取原始数据
     data_path = backend_dir / 'data' / '1_demand_forecasting' / 'data.csv'
     df = pd.read_csv(data_path, encoding='latin1')
     
-    # 转换日期并聚合为月度数据
     df['tdate'] = pd.to_datetime(df['tdate'], errors='coerce')
     df = df[df['tdate'].notna()]
     df = df[df['tdate'] >= '2013-01-01']
@@ -379,13 +377,12 @@ def prepare_prophet_data(backend_dir: Path) -> pd.DataFrame:
     monthly_data['date'] = pd.to_datetime(monthly_data['date'])
     monthly_data = monthly_data[['date', 'count']].sort_values('date').reset_index(drop=True)
     
-    # 读取人口数据（月度）- 如果有的话
     pop_monthly_path = backend_dir / 'data' / '1_demand_forecasting' / 'acs1_population_2013_2023_age_group.csv'
     if pop_monthly_path.exists():
         pop_monthly = pd.read_csv(pop_monthly_path)
         if 'date' in pop_monthly.columns:
             pop_monthly['date'] = pd.to_datetime(pop_monthly['date'])
-            # 合并人口数据
+            # Merge population data
             monthly_data = monthly_data.merge(
                 pop_monthly,
                 on='date',
@@ -397,13 +394,12 @@ def prepare_prophet_data(backend_dir: Path) -> pd.DataFrame:
 
 def extract_forecast_data(forecast: pd.DataFrame, train_data: pd.DataFrame) -> Dict[str, Any]:
     """
-    从 Prophet forecast 中提取数据用于前端可视化
+    Extract forecast data for frontend visualization from Prophet forecast
     
-    返回:
-    - forecast_data: 预测数据（包含历史拟合和未来预测）
-    - components: 模型组件数据（trend, yearly等）
-    """
-    # 提取预测数据
+    Returns:
+    - forecast_data: Forecast data (including historical fit and future forecast)
+    - components: Model components data (trend, yearly, etc.)
+    """ 
     forecast_data = []
     for _, row in forecast.iterrows():
         forecast_data.append({
@@ -413,7 +409,6 @@ def extract_forecast_data(forecast: pd.DataFrame, train_data: pd.DataFrame) -> D
             'upper': float(row['yhat_upper'])
         })
     
-    # 添加历史实际值（直接遍历 train_data，因为所有训练数据的日期都在 forecast 中）
     historical_actual = []
     for _, row in train_data.iterrows():
         historical_actual.append({
@@ -422,7 +417,6 @@ def extract_forecast_data(forecast: pd.DataFrame, train_data: pd.DataFrame) -> D
         })
     
     
-    # 提取组件数据
     components = {}
     
     # Trend

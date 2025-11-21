@@ -263,8 +263,7 @@ def estimate_unmet_demand(
     """
     # Adjust historical missions by coverage rate
     covered_demand = historical_missions * coverage_rate
-    
-    print(f"covered_demand: {covered_demand}, historical_missions: {historical_missions}, capacity: {capacity}, coverage_rate: {coverage_rate}")
+
     # Unmet demand is the difference between covered demand and capacity
     unmet = max(0, covered_demand - capacity)
     unmet_rate = (unmet / covered_demand * 100) if covered_demand > 0 else 0.0
