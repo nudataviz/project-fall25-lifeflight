@@ -660,7 +660,10 @@ def simulate_scenario_api():
         "crews_per_vehicle": int,
         "base_locations": ["BANGOR", "PORTLAND", ...],
         "service_radius_miles": float,
-        "sla_target_minutes": int
+        "sla_target_minutes": int,
+        "base_operational_cost_per_year": float (optional, default: 500000),
+        "vehicle_cost_per_year": float (optional, default: 100000),
+        "crew_cost_per_year": float (optional, default: 80000)
     }
     """
     try:
@@ -678,6 +681,9 @@ def simulate_scenario_api():
         missions_per_vehicle_per_day = int(data.get('missions_per_vehicle_per_day', 3))
         service_radius_miles = float(data.get('service_radius_miles', 50.0))
         sla_target_minutes = int(data.get('sla_target_minutes', 20))
+        base_operational_cost_per_year = float(data.get('base_operational_cost_per_year', 500000.0))
+        vehicle_cost_per_year = float(data.get('vehicle_cost_per_year', 100000.0))
+        crew_cost_per_year = float(data.get('crew_cost_per_year', 80000.0))
         
         if fleet_size < 1 or fleet_size > 20:
             return jsonify({
@@ -709,7 +715,10 @@ def simulate_scenario_api():
             crews_per_vehicle=crews_per_vehicle,
             base_locations=base_locations,
             service_radius_miles=service_radius_miles,
-            sla_target_minutes=sla_target_minutes
+            sla_target_minutes=sla_target_minutes,
+            base_operational_cost_per_year=base_operational_cost_per_year,
+            vehicle_cost_per_year=vehicle_cost_per_year,
+            crew_cost_per_year=crew_cost_per_year
         )
         
         return jsonify({
@@ -809,7 +818,10 @@ def compare_scenarios_api():
                 crews_per_vehicle=int(scenario_params.get('crews_per_vehicle', 2)),
                 base_locations=scenario_params.get('base_locations', ['BANGOR']),
                 service_radius_miles=float(scenario_params.get('service_radius_miles', 50.0)),
-                sla_target_minutes=int(scenario_params.get('sla_target_minutes', 20))
+                sla_target_minutes=int(scenario_params.get('sla_target_minutes', 20)),
+                base_operational_cost_per_year=float(scenario_params.get('base_operational_cost_per_year', 500000.0)),
+                vehicle_cost_per_year=float(scenario_params.get('vehicle_cost_per_year', 100000.0)),
+                crew_cost_per_year=float(scenario_params.get('crew_cost_per_year', 80000.0))
             )
             simulated_scenarios.append(result)
         

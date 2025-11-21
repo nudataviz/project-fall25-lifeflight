@@ -18,8 +18,17 @@ import {
   Alert,
   Grid,
   Chip,
-  IconButton
+  IconButton,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Select,
+  MenuItem,
+  OutlinedInput,
+  FormControl,
+  InputLabel
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useTheme } from '@mui/material';
 import { tokens } from '../theme';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -33,10 +42,15 @@ const WhatIfScenarioPanel = () => {
   // Scenario parameters
   const [fleetSize, setFleetSize] = useState(3);
   const [missionsPerVehiclePerDay, setMissionsPerVehiclePerDay] = useState(3);
-  const [crewsPerVehicle, setCrewsPerVehicle] = useState(2);
+  const [crewsPerVehicle, setCrewsPerVehicle] = useState(3);
   const [selectedBases, setSelectedBases] = useState([]);
   const [serviceRadius, setServiceRadius] = useState(50);
   const [slaTarget, setSlaTarget] = useState(20);
+  
+  // Cost parameters
+  const [baseOperationalCost, setBaseOperationalCost] = useState(500000);
+  const [vehicleCost, setVehicleCost] = useState(100000);
+  const [crewCost, setCrewCost] = useState(80000);
   
   // Data
   const [baseLocations, setBaseLocations] = useState({ existing: [], candidates: [] });
@@ -88,7 +102,10 @@ const WhatIfScenarioPanel = () => {
           crews_per_vehicle: crewsPerVehicle,
           base_locations: selectedBases,
           service_radius_miles: serviceRadius,
-          sla_target_minutes: slaTarget
+          sla_target_minutes: slaTarget,
+          base_operational_cost_per_year: baseOperationalCost,
+          vehicle_cost_per_year: vehicleCost,
+          crew_cost_per_year: crewCost
         })
       });
       
@@ -110,7 +127,7 @@ const WhatIfScenarioPanel = () => {
     } finally {
       setLoading(false);
     }
-  }, [fleetSize, missionsPerVehiclePerDay, crewsPerVehicle, selectedBases, serviceRadius, slaTarget]);
+  }, [fleetSize, missionsPerVehiclePerDay, crewsPerVehicle, selectedBases, serviceRadius, slaTarget, baseOperationalCost, vehicleCost, crewCost]);
 
   useEffect(() => {
     fetchBaseLocations();
@@ -142,7 +159,10 @@ const WhatIfScenarioPanel = () => {
         crews_per_vehicle: crewsPerVehicle,
         base_locations: [...selectedBases],
         service_radius_miles: serviceRadius,
-        sla_target_minutes: slaTarget
+        sla_target_minutes: slaTarget,
+        base_operational_cost_per_year: baseOperationalCost,
+        vehicle_cost_per_year: vehicleCost,
+        crew_cost_per_year: crewCost
       },
       result: scenarioResult,
       timestamp: new Date().toISOString()
@@ -343,6 +363,119 @@ const WhatIfScenarioPanel = () => {
                 />
               </Grid>
               
+              {/* Cost Parameters - Collapsible */}
+              <Grid item xs={12}>
+                <Accordion 
+                  defaultExpanded={false}
+                  sx={{
+                    backgroundColor: '#ffffff',
+                    boxShadow: 'none',
+                    border: `1px solid ${colors.grey[300]}`,
+                    '&:before': {
+                      display: 'none',
+                    },
+                  }}
+                >
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon sx={{ color: '#000000' }} />}
+                    sx={{
+                      backgroundColor: colors.grey[50],
+                      '&:hover': {
+                        backgroundColor: colors.grey[900],
+                      },
+                    }}
+                  >
+                    <Typography variant="body1" sx={{ color: '#000000', fontWeight: 'medium' }}>
+                      Cost Parameters
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Grid container spacing={2}>
+                      {/* Base Operational Cost */}
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          type="number"
+                          label="Base Operational Cost per Year ($)"
+                          value={baseOperationalCost}
+                          onChange={(e) => setBaseOperationalCost(parseFloat(e.target.value) || 0)}
+                          inputProps={{ min: 0, step: 10000 }}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              color: '#000000',
+                              '& fieldset': {
+                                borderColor: colors.grey[400],
+                              },
+                              '&:hover fieldset': {
+                                borderColor: colors.grey[500],
+                              },
+                            },
+                            '& .MuiInputLabel-root': {
+                              color: colors.grey[700],
+                            },
+                          }}
+                          helperText="Annual operational cost per base"
+                        />
+                      </Grid>
+                      
+                      {/* Vehicle Cost */}
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          type="number"
+                          label="Vehicle Cost per Year ($)"
+                          value={vehicleCost}
+                          onChange={(e) => setVehicleCost(parseFloat(e.target.value) || 0)}
+                          inputProps={{ min: 0, step: 10000 }}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              color: '#000000',
+                              '& fieldset': {
+                                borderColor: colors.grey[400],
+                              },
+                              '&:hover fieldset': {
+                                borderColor: colors.grey[500],
+                              },
+                            },
+                            '& .MuiInputLabel-root': {
+                              color: colors.grey[700],
+                            },
+                          }}
+                          helperText="Annual cost per vehicle"
+                        />
+                      </Grid>
+                      
+                      {/* Crew Cost */}
+                      <Grid item xs={12}>
+                        <TextField
+                          fullWidth
+                          type="number"
+                          label="Crew Cost per Year ($)"
+                          value={crewCost}
+                          onChange={(e) => setCrewCost(parseFloat(e.target.value) || 0)}
+                          inputProps={{ min: 0, step: 10000 }}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              color: '#000000',
+                              '& fieldset': {
+                                borderColor: colors.grey[400],
+                              },
+                              '&:hover fieldset': {
+                                borderColor: colors.grey[500],
+                              },
+                            },
+                            '& .MuiInputLabel-root': {
+                              color: colors.grey[700],
+                            },
+                          }}
+                          helperText="Annual cost per crew member"
+                        />
+                      </Grid>
+                    </Grid>
+                  </AccordionDetails>
+                </Accordion>
+              </Grid>
+              
               {/* Base Locations */}
               <Grid item xs={12}>
                 <Typography variant="body1" sx={{ mb: 1, color: '#000000' }}>
@@ -378,28 +511,112 @@ const WhatIfScenarioPanel = () => {
                     <Typography variant="body2" sx={{ mb: 1, color: colors.grey[600], fontWeight: 'bold' }}>
                       Candidate Bases
                     </Typography>
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {baseLocations.candidates.map((base) => (
-                        <Chip
-                          key={`candidate-${base.name}`}
-                          label={base.name}
-                          onClick={() => handleBaseToggle(base.name)}
-                          color={selectedBases.includes(base.name) ? 'primary' : 'default'}
-                          sx={{
-                            color: selectedBases.includes(base.name) ? colors.grey[100] : '#000000',
-                            backgroundColor: selectedBases.includes(base.name) 
-                              ? colors.blueAccent[700] 
-                              : '#ffffff',
-                            border: selectedBases.includes(base.name) ? 'none' : `1px solid ${colors.grey[300]}`,
-                            '&:hover': {
-                              backgroundColor: selectedBases.includes(base.name)
-                                ? colors.blueAccent[600]
-                                : colors.grey[100]
-                            }
-                          }}
-                        />
-                      ))}
-                    </Box>
+                    <FormControl fullWidth sx={{ mb: 1 }}>
+                      <InputLabel 
+                        id="candidate-bases-select-label"
+                        sx={{ color: colors.grey[700] }}
+                      >
+                        Select Candidate Bases
+                      </InputLabel>
+                      <Select
+                        labelId="candidate-bases-select-label"
+                        id="candidate-bases-select"
+                        multiple
+                        value={selectedBases.filter(base => 
+                          baseLocations.candidates.some(c => c.name === base)
+                        )}
+                        onChange={(e) => {
+                          const newSelectedCandidates = e.target.value;
+                          // Remove previously selected candidates
+                          const otherBases = selectedBases.filter(base => 
+                            !baseLocations.candidates.some(c => c.name === base)
+                          );
+                          // Add new selected candidates
+                          setSelectedBases([...otherBases, ...newSelectedCandidates]);
+                        }}
+                        input={<OutlinedInput label="Select Candidate Bases" />}
+                        renderValue={(selected) => {
+                          if (selected.length === 0) {
+                            return <em>None selected</em>;
+                          }
+                          return `${selected.length} selected`;
+                        }}
+                        sx={{
+                          color: '#000000',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: colors.grey[900],
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: colors.grey[900],
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: colors.blueAccent[700],
+                          },
+                        }}
+                        MenuProps={{
+                          PaperProps: {
+                            sx: {
+                              maxHeight: 300,
+                            },
+                          },
+                        }}
+                      >
+                        {baseLocations.candidates.map((base) => (
+                          <MenuItem
+                            key={`candidate-${base.name}`}
+                            value={base.name}
+                            sx={{
+                              color: '#000000',
+                              '&.Mui-selected': {
+                                backgroundColor: colors.blueAccent[50] || colors.grey[100],
+                                color: colors.blueAccent[700],
+                                '&:hover': {
+                                  backgroundColor: colors.blueAccent[100] || colors.grey[200],
+                                },
+                                '&.Mui-focusVisible': {
+                                  backgroundColor: colors.blueAccent[100] || colors.grey[200],
+                                },
+                              },
+                              '&:hover': {
+                                backgroundColor: colors.grey[50],
+                              },
+                            }}
+                          >
+                            {base.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    {/* Display selected candidate bases as chips */}
+                    {selectedBases.filter(base => 
+                      baseLocations.candidates.some(c => c.name === base)
+                    ).length > 0 && (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                        {selectedBases
+                          .filter(base => baseLocations.candidates.some(c => c.name === base))
+                          .map((baseName) => (
+                            <Chip
+                              key={`selected-candidate-${baseName}`}
+                              label={baseName}
+                              onDelete={() => handleBaseToggle(baseName)}
+                              color="primary"
+                              sx={{
+                                color: colors.grey[100],
+                                backgroundColor: colors.blueAccent[700],
+                                '&:hover': {
+                                  backgroundColor: colors.blueAccent[600],
+                                },
+                                '& .MuiChip-deleteIcon': {
+                                  color: colors.grey[100],
+                                  '&:hover': {
+                                    color: colors.grey[300],
+                                  },
+                                },
+                              }}
+                            />
+                          ))}
+                      </Box>
+                    )}
                   </Box>
                 </Box>
                 {selectedBases.length === 0 && (

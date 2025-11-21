@@ -242,38 +242,38 @@ def create_coverage_map(
         grid_size=20  # Reduced from 30 to 20 for better performance (400 points instead of 900)
     )
     
-    # Add heatmap layer for coverage
-    if len(grid_df) > 0:
-        # Filter by coverage threshold
-        coverage_key = f'coverage_{coverage_threshold_minutes}min'
-        if coverage_key in grid_df.columns:
-            covered_points = grid_df[grid_df[coverage_key] == True]
+    # # Add heatmap layer for coverage
+    # if len(grid_df) > 0:
+    #     # Filter by coverage threshold
+    #     coverage_key = f'coverage_{coverage_threshold_minutes}min'
+    #     if coverage_key in grid_df.columns:
+    #         covered_points = grid_df[grid_df[coverage_key] == True]
             
-            if len(covered_points) > 0:
-                heat_data = [
-                    [row['latitude'], row['longitude'], row['response_time_minutes'] or 0]
-                    for _, row in covered_points.iterrows()
-                ]
+    #         if len(covered_points) > 0:
+    #             heat_data = [
+    #                 [row['latitude'], row['longitude'], row['response_time_minutes'] or 0]
+    #                 for _, row in covered_points.iterrows()
+    #             ]
                 
-                # Add coverage heatmap layer (sample points for better performance)
-                # Sample every other point to reduce data size
-                if len(heat_data) > 1000:
-                    import random
-                    heat_data = random.sample(heat_data, min(1000, len(heat_data)))
+    #             # Add coverage heatmap layer (sample points for better performance)
+    #             # Sample every other point to reduce data size
+    #             if len(heat_data) > 1000:
+    #                 import random
+    #                 heat_data = random.sample(heat_data, min(1000, len(heat_data)))
                 
-                HeatMap(
-                    heat_data,
-                    name='Coverage Heatmap',
-                    min_opacity=0.3,
-                    max_zoom=18,
-                    radius=20,  # Larger radius for smoother appearance
-                    blur=20,
-                    gradient={
-                        0.0: 'green',
-                        0.5: 'yellow',
-                        1.0: 'red'
-                    }
-                ).add_to(m)
+    #             HeatMap(
+    #                 heat_data,
+    #                 name='Coverage Heatmap',
+    #                 min_opacity=0.3,
+    #                 max_zoom=18,
+    #                 radius=20,  # Larger radius for smoother appearance
+    #                 blur=20,
+    #                 gradient={
+    #                     0.0: 'green',
+    #                     0.5: 'yellow',
+    #                     1.0: 'red'
+    #                 }
+    #             ).add_to(m)
     
     # Add base markers
     for base in base_locations:
@@ -303,6 +303,7 @@ def create_coverage_map(
         city_demand = process_city_demand(df, city_coordinates)
         
         # Get top cities by demand or all cities within service radius
+        city_layer = folium.FeatureGroup(name='High-Demand Cities')
         city_cluster = MarkerCluster()
         city_count = 0
         max_cities = 50  # Limit to 50 cities for performance
@@ -351,7 +352,8 @@ def create_coverage_map(
                 if city_count >= max_cities:
                     break
         
-        city_cluster.add_to(m)
+        city_cluster.add_to(city_layer)
+        city_layer.add_to(m)
     except Exception as e:
         print(f"Warning: Could not add city markers: {e}")
     
@@ -434,7 +436,7 @@ def get_base_siting_analysis(
     
     # Load city coordinates
     backend_dir = Path(__file__).parent.parent
-    city_coords_path = backend_dir / 'data' / 'city_coordinates.json'
+    city_coords_path = backend_dir / 'data' / 'maine_city_coordinates.json'
     
     if city_coords_path.exists():
         with open(city_coords_path, 'r') as f:

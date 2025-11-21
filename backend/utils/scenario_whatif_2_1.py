@@ -309,7 +309,7 @@ def estimate_cost(
         'base_cost': float(base_cost),
         'vehicle_cost': float(vehicle_cost),
         'crew_cost': float(crew_cost),
-        'cost_per_mission': float(total_cost / 1000)  # Estimate based on 1000 missions
+        'cost_per_mission': float(total_cost / 2000)  # Estimate based on 1000 missions
     }
 
 
@@ -320,7 +320,10 @@ def simulate_scenario(
     base_locations: List[str],
     service_radius_miles: float,
     sla_target_minutes: int,
-    base_coordinates: Optional[List[Dict[str, Any]]] = None
+    base_coordinates: Optional[List[Dict[str, Any]]] = None,
+    base_operational_cost_per_year: float = 500000.0,
+    vehicle_cost_per_year: float = 100000.0,
+    crew_cost_per_year: float = 80000.0
 ) -> Dict[str, Any]:
     """
     Simulate a scenario and calculate KPIs.
@@ -389,7 +392,7 @@ def simulate_scenario(
     unmet_metrics = estimate_unmet_demand(last_year_missions, capacity, coverage_rate)
     
     # Estimate cost
-    cost_metrics = estimate_cost(fleet_size, crews_per_vehicle, len(base_locations))
+    cost_metrics = estimate_cost(fleet_size, crews_per_vehicle, len(base_locations), base_operational_cost_per_year, vehicle_cost_per_year, crew_cost_per_year)
     
     return {
         'scenario_params': {

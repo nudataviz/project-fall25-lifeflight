@@ -557,7 +557,7 @@ const EventImpactReplay = () => {
                     },
                     tooltip: {
                       container: {
-                        background: colors.primary[500],
+                        // background: colors.primary[500],
                         color: colors.grey[100]
                       }
                     }

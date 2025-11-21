@@ -38,7 +38,7 @@ const BaseSitingMap = () => {
   const [slaTarget, setSlaTarget] = useState(20);
   const [coverageThreshold, setCoverageThreshold] = useState(20);
   const [fleetSize, setFleetSize] = useState(3);
-  const [crewsPerVehicle, setCrewsPerVehicle] = useState(2);
+  const [crewsPerVehicle, setCrewsPerVehicle] = useState(3);
   const [missionsPerVehiclePerDay, setMissionsPerVehiclePerDay] = useState(3);
   const [mapView, setMapView] = useState('before'); // 'before' or 'after'
   
@@ -214,7 +214,7 @@ const BaseSitingMap = () => {
               ))}
             </Box>
             <Typography variant="body1" sx={{ mb: 1, color: colors.grey[100], fontWeight: 'bold' }}>
-              Candidate Base Options
+              Add more Base Locations
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
               {availableBases.candidates.map((base) => (
@@ -248,10 +248,11 @@ const BaseSitingMap = () => {
           {/* Candidate Base */}
           <Grid item xs={12} md={6}>
             <FormControl fullWidth>
-              <InputLabel sx={{ color: colors.grey[100] }}>Candidate Base (Optional)</InputLabel>
+              {/* 名字：加入此基地后对比（可选） */}
+              <InputLabel sx={{ color: colors.grey[100] }}>Compare Against This Base (Optional)</InputLabel>
               <Select
                 value={candidateBase?.name || ''}
-                label="Candidate Base (Optional)"
+                label="Compare Against This Base (Optional)"
                 onChange={(e) => handleCandidateBaseSelect(e.target.value)}
                 sx={{
                   color: colors.grey[100],
