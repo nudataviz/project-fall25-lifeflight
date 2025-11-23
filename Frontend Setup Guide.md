@@ -1,6 +1,6 @@
 # LifeFlight Dashboard – Frontend
 
-This repository contains the frontend application for the LifeFlight dashboard MVP.
+This repository contains the frontend application for the LifeFlight dashboard.
 
 ---
 
