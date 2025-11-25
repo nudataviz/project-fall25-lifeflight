@@ -191,7 +191,7 @@ calculateMetrics(forecastData.data.cv_metrics)
 
 ## 1.2 Day-of-Week/Hour Heatmap
 
-This chart aggregates historical operational data by weekday and hour to reveal cyclical patterns in LifeFlight demand. Color intensity represents the average number of missions, highlighting differences between weekdays and weekends and variations across times of day.
+This chart aggregates historical operational data by weekday and hour to reveal cyclical patterns in LifeFlight demand. Color intensity represents the number of missions in each hour, highlighting differences between weekdays and weekends and variations across times of day.
 
 Please select the year and month you’d like to view.
 

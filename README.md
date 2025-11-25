@@ -37,7 +37,7 @@ python app.py
 http://localhost:5001/
 ```
 
-### Frontend
+### Frontend Setup
 - Navigate to the frontend directory:
 ```bash
 cd lifeflight-dashboard
