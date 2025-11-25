@@ -42,16 +42,16 @@ http://localhost:5001/
 ```bash
 cd lifeflight-dashboard
 ```
+- Install Node.js dependencies:
+```bash
+npm install
+```
 
 - Start the development server:
 ```bash
 npm run dev
 ```
 
-- Install Node.js dependencies:
-```bash
-npm install
-```
 
 - The frontend will be available at:
 ```bash
