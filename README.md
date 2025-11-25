@@ -32,10 +32,9 @@ pip install -r requirements.txt
 ```bash
 python app.py
 ```
-- The backend API will be available at:
-```bash
+The backend API will be available at: `
 http://localhost:5001/
-```
+`
 
 ### Frontend Setup
 - Navigate to the frontend directory:
@@ -53,10 +52,7 @@ npm run dev
 ```
 
 
-- The frontend will be available at:
-```bash
-http://127.0.0.1:3000/
-```
+The frontend will be available at: `http://127.0.0.1:3000/ `
 
 # Extra Data Sources
 - **Maine Population Projections**:：https://www.maine.gov/dafs/economist/demographic-projections
