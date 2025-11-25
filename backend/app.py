@@ -84,12 +84,10 @@ def get_indicators():
     # 4 Yearly Average Response Time
     yart_str = calculate_response_time(df,2023)
     
-    # Convert timedelta string to "X min Y sec" format
     def extract_minutes_seconds(timedelta_str):
         if timedelta_str == "N/A":
             return "N/A"
         try:
-            # Parse timedelta string like "0 days 00:22:09.824561403"
             td = pd.Timedelta(timedelta_str)
             total_seconds = int(td.total_seconds())
             minutes = total_seconds // 60

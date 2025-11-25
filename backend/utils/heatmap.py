@@ -3,16 +3,15 @@ import json
 import os
 from folium.plugins import HeatMap
 import pandas as pd
-from typing import Dict, Tuple, Optional, List
+from typing import Dict, Tuple, Optional
 
 
 def get_city_coordinates() -> Dict[str, Tuple[float, float]]:
     """
     Load city coordinates from JSON file.
-    
-    Returns:
-        Dictionary mapping city names to (latitude, longitude) tuples.
     """
+    # city_coordinates is nationwide coordinates
+    # maine_city_coordinates is the coordinates only for maine cities
     with open(os.path.join(os.path.dirname(__file__), '..','data', 'city_coordinates.json'), 'r') as f:
         city_coordinates = json.load(f)
     return city_coordinates
@@ -24,14 +23,6 @@ def process_city_demand(
 ) -> pd.DataFrame:
     """
     Process city demand data and add coordinate information.
-    
-    Args:
-        df: DataFrame containing 'PU City' column
-        city_coordinates: Dictionary mapping city names to (lat, lon) tuples.
-                         If None, uses default coordinates.
-    
-    Returns:
-        Processed DataFrame with latitude, longitude, and task_count columns.
     """
     if city_coordinates is None:
         city_coordinates = get_city_coordinates()
@@ -46,8 +37,7 @@ def process_city_demand(
     city_demand['longitude'] = city_demand['PU City'].apply(
         lambda x: city_coordinates.get(x, (None, None))[1]
     )
-    
-    # Remove rows with missing coordinates
+
     city_demand.dropna(subset=['latitude', 'longitude'], inplace=True)
     
     return city_demand
@@ -61,17 +51,7 @@ def create_heatmap(
     radius: int = 10
 ) -> folium.Map:
     """
-    Create a heatmap visualization.
-    
-    Args:
-        city_demand: DataFrame containing latitude, longitude, and task_count columns
-        center_lat: Map center latitude. If None, uses mean of data latitudes.
-        center_lon: Map center longitude. If None, uses mean of data longitudes.
-        zoom_start: Initial zoom level
-        radius: Heatmap radius
-    
-    Returns:
-        folium.Map object
+    Create a heatmap visualization
     """
     if center_lat is None:
         center_lat = city_demand['latitude'].mean()
@@ -82,7 +62,6 @@ def create_heatmap(
         location=[center_lat, center_lon],
         zoom_start=zoom_start
     )
-    # Prepare heatmap data: [[lat, lon, weight], ...]
     heatmap_data = city_demand[['latitude', 'longitude', 'task_count']].values.tolist()
     
     # Add heatmap layer
@@ -97,16 +76,7 @@ def generate_city_demand_heatmap(
     radius: int = 10
 ) -> folium.Map:
     """
-    Complete workflow: Generate heatmap from raw data.
-    
-    Args:
-        df: Raw DataFrame containing 'PU City' column
-        city_coordinates: Dictionary mapping city names to coordinates
-        zoom_start: Initial zoom level
-        radius: Heatmap radius
-    
-    Returns:
-        folium.Map object
+    Complete workflow: Generate heatmap from raw data
     """
     # Process data
     city_demand = process_city_demand(df, city_coordinates)
@@ -119,11 +89,5 @@ def generate_city_demand_heatmap(
 def map_to_html(map_obj: folium.Map) -> str:
     """
     Convert folium map object to HTML string.
-    
-    Args:
-        map_obj: folium.Map object
-    
-    Returns:
-        HTML string
     """
     return map_obj._repr_html_()

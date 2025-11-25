@@ -14,7 +14,10 @@ You can adjust the model parameters below.
 
 ### Input parameters
 
+
+<div class='card'>
 <h4>Basic parameters<h4/>
+<div>
 
 ```js
 const periods = view(Inputs.range([1, 10], {
@@ -69,9 +72,12 @@ const intervalWidth = view(Inputs.range([0.5, 0.99], {
   step: 0.01,
 }))
 ```
+</div>
+</div>
 
+<div class='card'>
 <h4>Extra variables parameters<h4/>
-
+<div>
 
 ```js
 const availableRegressors = [
@@ -109,7 +115,8 @@ const regressorPriorScale = view(Inputs.range([0.001, 0.5], {
   format: (x) => x.toFixed(3)
 }))
 ```
-
+</div>
+</div>
 
 
 
@@ -151,9 +158,6 @@ try{
   
 ```
 
-```js
-forecastData.data.cv_metrics
-```
 
 ```js 
 import {prepareChartData} from "./components/demand-forecasting/prepareLineChartData.js"
@@ -242,5 +246,6 @@ import {demandHeatmap} from "./components/demand-forecasting/demandHeatmap.js"
 ```
 
 ```js
+
 demandHeatmap(heatmapData.data,heatmapYear,heatmapMonth)
 ```

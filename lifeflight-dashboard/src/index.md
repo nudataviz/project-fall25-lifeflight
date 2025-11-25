@@ -1,13 +1,84 @@
 ---
 toc: false
+theme: dashboard
 ---
 
+```js
+let indicatorData = null;
+let error = null;
+try{
+  const response = await fetch('http://localhost:5001/api/indicators')
+  if(!response.ok){
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+  }
+  indicatorData = await response.json()
+}catch(e){
+  error = e.message
+  console.error('Error', error)
+}
+```
 <div class="hero">
   <h1>Lifeflight Dashboard</h1>
-  <h2>Welcome to your new app! Edit&nbsp;<code style="font-size: 90%;">src/index.md</code> to change this page.</h2>
-  <a href="https://observablehq.com/framework/getting-started">Get started<span style="display: inline-block; margin-left: 0.25rem;">↗︎</span></a>
+  <h2>Welcome to Lifeflight Dashboard!</h2>
+  <a href="https://lifeflightmaine.org/">LifeFlight Website<span style="display: inline-block; margin-left: 0.25rem;">↗︎</span></a>
 </div>
 
+<!-- indicator card -->
+<div class="grid grid-cols-4">
+  <div class="card">
+    <h2>📈 Total Missions Completed(2012.7-2023.12)</h2>
+    <span class="big">${indicatorData?.data?.total_missions}</span>
+  </div>
+  <div class="card">
+    <h2>📍 Cities Served</h2>
+    <span class="big">${indicatorData?.data?.total_cities_covered}</span>
+  </div>
+  <div class="card">
+    <h2>⏱️ Response Time <span class="muted"> Monthly average</span></h2>
+    <span class="big">${indicatorData?.data?.mart}</span>
+  </div>
+  
+  <div class="card">
+    <h2>⏱️ Response Time <span class="muted"> Yearly average</span></h2>
+    <span class="big">${indicatorData?.data?.yart}</span>
+  </div>
+</div>
+
+
+<!-- map -->
+```js
+let mapHtml = null
+let error = null
+try{
+  const mapResponse = await fetch('HTTP://localhost:5001/api/heatmap')
+  if(!mapResponse.ok){
+    throw new Error(`HTTP ${mapResponse.status}: ${mapResponse.statusText}`)
+  }
+  mapHtml = await mapResponse.text()
+}catch(e){
+  error = e.message
+  console.log('Error',error)
+}
+
+```
+
+
+```js
+  html`
+    <div class="card" style="overflow: hidden;">
+    <h2>LifeFlight Pickup Location Heatmap</h2>
+    <h3 style="color: #666;white-space: nowrap">
+      Heatmap of all patient transports from July 2012 to December 2023, based on pickup city locations.</h3>
+      <iframe 
+        srcdoc=${mapHtml}
+        style="width: 100%; height: 600px; border: none;"
+        title="Heatmap"
+      ></iframe>
+    </div>
+  `
+```
+
+<!--  
 <div class="grid grid-cols-2" style="grid-auto-rows: 504px;">
   <div class="card">${
     resize((width) => Plot.plot({
@@ -66,7 +137,7 @@ Here are some ideas of things you could try…
     Visit <a href="https://github.com/observablehq/framework">Framework on GitHub</a> and give us a star. Or file an issue if you’ve found a bug!
   </div>
 </div>
-
+-->
 <style>
 
 .hero {
@@ -74,7 +145,7 @@ Here are some ideas of things you could try…
   flex-direction: column;
   align-items: center;
   font-family: var(--sans-serif);
-  margin: 4rem 0 8rem;
+  margin: 4rem 0 4rem;
   text-wrap: balance;
   text-align: center;
 }
