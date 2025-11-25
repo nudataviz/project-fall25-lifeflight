@@ -9,11 +9,6 @@ This repository contains the backend API for the LifeFlight dashboard.
 
 - **Python 3.8 or newer**
 
-Check your version:
-```bash
-python3 --version
-````
-
 -----
 
 ## Setup

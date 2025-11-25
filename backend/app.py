@@ -61,6 +61,7 @@ def get_veh_count():
         'data': veh_count
     })
 
+# ======== dashboard page =========
 @app.route('/api/heatmap',methods=['GET'])
 def get_heatmap():
     """Get heatmap visualization"""
@@ -110,75 +111,8 @@ def get_indicators():
         }
     })
 
-@app.route('/api/hourly_departure', methods=['GET'])
-def get_hourly_departure():
-    """Get hourly departure density data"""
-    
-    df = read_data()
-    df['tdate'] = pd.to_datetime(df['tdate'], errors='coerce')
-    df['Year'] = df['tdate'].dt.year
-    df = df[df['Year'] == 2023]
 
-    df['enrtime_dt'] = pd.to_datetime(df['enrtime'], errors='coerce').dt.time
-    df.dropna(subset=['enrtime_dt'], inplace=True)
-    df['enr_hour'] = pd.to_datetime(df['enrtime_dt'].astype(str)).dt.hour
-    
-    def get_season(month):
-        if month in [3, 4, 5]:
-            return 'Spring'
-        elif month in [6, 7, 8]:
-            return 'Summer'
-        elif month in [9, 10, 11]:
-            return 'Autumn'
-        else:
-            return 'Winter'
-    
-    df['tdate'] = pd.to_datetime(df['tdate'], errors='coerce')
-    df['season'] = df['tdate'].dt.month.apply(get_season)
-    
-    all_hours = list(range(24))
-    
-    overall_counts = df['enr_hour'].value_counts().sort_index()
-    overall_density = overall_counts / overall_counts.sum()
-    
-    overall_data = []
-    for hour in all_hours:
-        count = int(overall_counts.get(hour, 0))
-        density = float(overall_density.get(hour, 0))
-        overall_data.append({
-            'hour': hour,
-            'count': count,
-            'density': density
-        })
-    
-    
-    season_data = {}
-    for season in ['Spring', 'Summer', 'Autumn', 'Winter']:
-        season_df = df[df['season'] == season]
-        season_counts = season_df['enr_hour'].value_counts().sort_index()
-        season_density = season_counts / season_counts.sum()
-        
-        season_hourly = []
-        for hour in all_hours:
-            count = int(season_counts.get(hour, 0))
-            density = float(season_density.get(hour, 0))
-            season_hourly.append({
-                'hour': hour,
-                'count': count,
-                'density': density
-            })
-        season_data[season] = season_hourly
-    
-    return jsonify({
-        'status': 'success',
-        'data': {
-            'overall': overall_data,
-            'by_season': season_data
-        }
-    })
-
-
-
+# ======== demand forecasting page =========
 @app.route('/api/predict_demand_v2', methods=['POST'])
 def predict_demand_v2():
     """Predict demand using Prophet model"""
@@ -434,6 +368,75 @@ def get_seasonality_heatmap_api():
             'status': 'error',
             'message': f'Failed to get seasonality heatmap: {str(e)}'
         }), 500
+    
+@app.route('/api/hourly_departure', methods=['GET'])
+def get_hourly_departure():
+    """Get hourly departure density data"""
+    
+    df = read_data()
+    df['tdate'] = pd.to_datetime(df['tdate'], errors='coerce')
+    df['Year'] = df['tdate'].dt.year
+    df = df[df['Year'] == 2023]
+
+    df['enrtime_dt'] = pd.to_datetime(df['enrtime'], errors='coerce').dt.time
+    df.dropna(subset=['enrtime_dt'], inplace=True)
+    df['enr_hour'] = pd.to_datetime(df['enrtime_dt'].astype(str)).dt.hour
+    
+    def get_season(month):
+        if month in [3, 4, 5]:
+            return 'Spring'
+        elif month in [6, 7, 8]:
+            return 'Summer'
+        elif month in [9, 10, 11]:
+            return 'Autumn'
+        else:
+            return 'Winter'
+    
+    df['tdate'] = pd.to_datetime(df['tdate'], errors='coerce')
+    df['season'] = df['tdate'].dt.month.apply(get_season)
+    
+    all_hours = list(range(24))
+    
+    overall_counts = df['enr_hour'].value_counts().sort_index()
+    overall_density = overall_counts / overall_counts.sum()
+    
+    overall_data = []
+    for hour in all_hours:
+        count = int(overall_counts.get(hour, 0))
+        density = float(overall_density.get(hour, 0))
+        overall_data.append({
+            'hour': hour,
+            'count': count,
+            'density': density
+        })
+    
+    
+    season_data = {}
+    for season in ['Spring', 'Summer', 'Autumn', 'Winter']:
+        season_df = df[df['season'] == season]
+        season_counts = season_df['enr_hour'].value_counts().sort_index()
+        season_density = season_counts / season_counts.sum()
+        
+        season_hourly = []
+        for hour in all_hours:
+            count = int(season_counts.get(hour, 0))
+            density = float(season_density.get(hour, 0))
+            season_hourly.append({
+                'hour': hour,
+                'count': count,
+                'density': density
+            })
+        season_data[season] = season_hourly
+    
+    return jsonify({
+        'status': 'success',
+        'data': {
+            'overall': overall_data,
+            'by_season': season_data
+        }
+    })
+
+
 
 @app.route('/api/demographics_elasticity', methods=['GET'])
 def get_demographics_elasticity_api():
