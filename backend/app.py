@@ -9,7 +9,6 @@ from utils.heatmap import generate_city_demand_heatmap, map_to_html
 from utils.getData import read_data
 from utils.responseTime import calculate_response_time
 from utils.veh_count import calculate_veh_count
-from utils.predicting.predict_demand import predict_demand as forecast_demand
 from utils.predicting.predict_demand import cross_validate_prophet
 from utils.predicting.predict_demand import prophet_predict
 from utils.predicting.predict_demand import extract_forecast_data
@@ -182,68 +181,16 @@ def get_hourly_departure():
 
 
 
-@app.route('/api/predict_demand', methods=['POST'])
-def predict_demand():
-    try:
-        data = request.get_json()
-        
-        if data is None:
-            model_name = request.args.get('model_name', 'prophet')
-            years = int(request.args.get('years', 3))
-        else:
-            model_name = data.get('model_name', 'prophet')
-            years = int(data.get('years', 3))
-        
-        if model_name not in ['prophet', 'arima']:
-            return jsonify({
-                'status': 'error',
-                'message': f"Unsupported model type: {model_name}. Please use 'prophet' or 'arima'"
-            }), 400
-        
-        if years < 1 or years > 10:
-            return jsonify({
-                'status': 'error',
-                'message': 'Years must be between 1 and 10'
-            }), 400
-        
-        result = forecast_demand(model_name, years)
-        
-        return jsonify({
-            'status': 'success',
-            'data': result
-        })
-        
-    except ValueError as e:
-        return jsonify({
-            'status': 'error',
-            'message': str(e)
-        }), 400
-    except FileNotFoundError as e:
-        return jsonify({
-            'status': 'error',
-            'message': f'Model file not found: {str(e)}'
-        }), 404
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': f'Prediction failed: {str(e)}'
-        }), 500
-
 @app.route('/api/predict_demand_v2', methods=['POST'])
 def predict_demand_v2():
-    """新的 Prophet 预测接口，支持自定义参数和额外变量"""
-    from pathlib import Path
+    """Predict demand using Prophet model"""
     
-    # 获取请求参数
     data = request.get_json() or {}
     
-    # 模型参数
     periods = int(data.get('periods', 12)) 
     extra_vars = data.get('extra_vars', [])
     growth = data.get('growth', 'linear')
     yearly_seasonality = data.get('yearly_seasonality', True)
-    weekly_seasonality = data.get('weekly_seasonality', False)
-    daily_seasonality = data.get('daily_seasonality', False)
     seasonality_mode = data.get('seasonality_mode', 'additive')
     changepoint_prior_scale = float(data.get('changepoint_prior_scale', 0.05))
     seasonality_prior_scale = float(data.get('seasonality_prior_scale', 10.0))
@@ -251,24 +198,19 @@ def predict_demand_v2():
     regressor_prior_scale = float(data.get('regressor_prior_scale', 0.05))
     regressor_mode = data.get('regressor_mode', 'additive')
     
-    # 获取后端目录路径
     backend_dir = Path(__file__).parent
     
-    # 直接读取数据文件
     data_path = backend_dir / 'data' / '1_demand_forecasting' / '1_1_history_data_v2.csv'
     prophet_data = pd.read_csv(data_path)
     prophet_data['date'] = pd.to_datetime(prophet_data['date'])
-    
-    # 训练模型并预测
+    print(extra_vars)
     forecast, model, train_data = prophet_predict(
         data=prophet_data,
-        freq='M',
+        freq='M', 
         extra_vars=extra_vars,
         periods=periods,
         growth=growth,
         yearly_seasonality=yearly_seasonality,
-        weekly_seasonality=weekly_seasonality,
-        daily_seasonality=daily_seasonality,
         seasonality_mode=seasonality_mode,
         changepoint_prior_scale=changepoint_prior_scale,
         seasonality_prior_scale=seasonality_prior_scale,
@@ -278,12 +220,9 @@ def predict_demand_v2():
         backend_dir=backend_dir
     )
     
-    # 提取预测数据和组件
     extracted_data = extract_forecast_data(forecast, train_data)
-    # 交叉验证
     cv_metrics = cross_validate_prophet(model, train_data)
     
-    # 返回结果
     return jsonify({
         'status': 'success',
         'data': {
@@ -304,11 +243,8 @@ def get_corr_matrix():
     try:
         corr_matrix = pd.read_csv(corr_matrix_path, index_col=0)
         
-        # 转换为适合前端使用的格式
-        # 返回矩阵数据和变量列表
         variables = corr_matrix.index.tolist()
         
-        # 转换为嵌套数组格式（用于热力图）
         matrix_data = []
         for var in variables:
             row = []
@@ -316,7 +252,6 @@ def get_corr_matrix():
                 row.append(float(corr_matrix.loc[var, col_var]))
             matrix_data.append(row)
         
-        # 获取与 count 的相关性（用于排序和参考）
         count_correlations = {}
         if 'count' in corr_matrix.index:
             for var in variables:
@@ -328,7 +263,7 @@ def get_corr_matrix():
             'data': {
                 'variables': variables,
                 'matrix': matrix_data,
-                'count_correlations': count_correlations  # 与 count 的相关性，用于参考
+                'count_correlations': count_correlations
             }
         })
     except Exception as e:
@@ -340,15 +275,6 @@ def get_corr_matrix():
     
 @app.route('/api/seasonality_heatmap', methods=['GET'])
 def get_seasonality_heatmap_api():
-    """
-    Get seasonality heatmap data (Chart 1.2).
-    
-    Query parameters:
-    - year: Year to analyze (required)
-    - location_level: 'system', 'state', 'county', or 'city' (default: 'system')
-    - location_value: Specific location value (optional)
-    - month: Month to filter (1-12, optional)
-    """
     try:
         year = int(request.args.get('year', 2023))
         location_level = request.args.get('location_level', 'system')
@@ -377,11 +303,9 @@ def get_seasonality_heatmap_api():
         
         result = get_seasonality_heatmap(year, location_level, location_value, month)
         
-        # Transform data for frontend (group by month if month not specified)
         heatmap_data = result['heatmap_data']
         metadata = result['metadata']
         
-        # If month not specified, group by month
         if month is None:
             months_data = {}
             for item in heatmap_data:
@@ -390,14 +314,12 @@ def get_seasonality_heatmap_api():
                     months_data[m] = []
                 months_data[m].append(item)
             
-            # Create structure for frontend
             month_names = ['January', 'February', 'March', 'April', 'May', 'June',
                           'July', 'August', 'September', 'October', 'November', 'December']
             
             formatted_data = []
             for m in sorted(months_data.keys()):
                 month_items = months_data[m]
-                # Group by weekday and hour
                 weekday_data = {}
                 for item in month_items:
                     wd = item['weekday']
@@ -409,12 +331,10 @@ def get_seasonality_heatmap_api():
                         'count': item['count']
                     })
                 
-                # Format for heatmap
                 heatmap_rows = []
-                for wd in range(7):  # 0-6 weekdays
+                for wd in range(7): 
                     hour_values = weekday_data.get(wd, [])
                     hour_dict = {item['hour']: item for item in hour_values}
-                    # Ensure all 24 hours are present
                     values = []
                     for h in range(24):
                         if h in hour_dict:
@@ -440,7 +360,6 @@ def get_seasonality_heatmap_api():
                     'heatmap': heatmap_rows
                 })
         else:
-            # Single month - format similarly
             month_names = ['January', 'February', 'March', 'April', 'May', 'June',
                           'July', 'August', 'September', 'October', 'November', 'December']
             weekday_data = {}
@@ -483,7 +402,6 @@ def get_seasonality_heatmap_api():
                 'heatmap': heatmap_rows
             }]
         
-        # Calculate stats
         all_values = [item['missions_per_1000'] for item in heatmap_data]
         peak_item = max(heatmap_data, key=lambda x: x['missions_per_1000']) if heatmap_data else None
         
@@ -493,7 +411,7 @@ def get_seasonality_heatmap_api():
             'max_missions_per_1000': float(np.max(all_values)) if all_values else 0,
             'min_missions_per_1000': float(np.min(all_values)) if all_values else 0,
             'peak_time': {
-                'month': peak_item['month'] if peak_item else None,
+                'month': peak_item.get('month', month) if peak_item else None,
                 'weekday': peak_item['weekday'] if peak_item else None,
                 'hour': peak_item['hour'] if peak_item else None
             } if peak_item else None
@@ -521,15 +439,6 @@ def get_seasonality_heatmap_api():
 
 @app.route('/api/demographics_elasticity', methods=['GET'])
 def get_demographics_elasticity_api():
-    """
-    Get demographics elasticity analysis data (Chart 1.3).
-    
-    Query parameters:
-    - year: Year to analyze (required, default: 2023)
-    - start_year_for_growth: Start year for growth rate calculation (optional)
-    - end_year_for_growth: End year for growth rate calculation (optional)
-    - independent_vars: Comma-separated list of independent variables (default: 'pct_65plus,growth_rate')
-    """
     try:
         year = int(request.args.get('year', 2023))
         start_year = request.args.get('start_year_for_growth', None)
@@ -574,15 +483,6 @@ def get_demographics_elasticity_api():
 
 @app.route('/api/event_impact', methods=['GET'])
 def get_event_impact_api():
-    """
-    Get event impact analysis data (Chart 1.4).
-    
-    Query parameters:
-    - event_id: Event identifier (required)
-    - location_level: 'county', 'city', or 'system' (default: 'county')
-    - location_value: Specific location value (optional)
-    - window_months: Number of months before and after event (default: 12)
-    """
     try:
         event_id = request.args.get('event_id', None)
         
@@ -634,9 +534,6 @@ def get_event_impact_api():
 
 @app.route('/api/events', methods=['GET'])
 def get_events_api():
-    """
-    Get list of all available events for the event picker.
-    """
     try:
         events = get_all_events()
         return jsonify({
@@ -651,21 +548,6 @@ def get_events_api():
 
 @app.route('/api/scenario_simulate', methods=['POST'])
 def simulate_scenario_api():
-    """
-    Simulate a what-if scenario (Chart 2.1).
-    
-    Request body:
-    {
-        "fleet_size": int,
-        "crews_per_vehicle": int,
-        "base_locations": ["BANGOR", "PORTLAND", ...],
-        "service_radius_miles": float,
-        "sla_target_minutes": int,
-        "base_operational_cost_per_year": float (optional, default: 500000),
-        "vehicle_cost_per_year": float (optional, default: 100000),
-        "crew_cost_per_year": float (optional, default: 80000)
-    }
-    """
     try:
         data = request.get_json()
         
@@ -740,9 +622,6 @@ def simulate_scenario_api():
 
 @app.route('/api/boxplot', methods=['GET'])
 def get_boxplot_api():
-    """
-    Get boxplot data 
-    """
     try:
         result = get_boxplot()
         return jsonify({
@@ -757,9 +636,6 @@ def get_boxplot_api():
 
 @app.route('/api/base_locations', methods=['GET'])
 def get_base_locations_api():
-    """
-    Get list of available base locations.
-    """
     try:
         bases = get_base_locations()
         return jsonify({
@@ -775,23 +651,6 @@ def get_base_locations_api():
 
 @app.route('/api/scenario_compare', methods=['POST'])
 def compare_scenarios_api():
-    """
-    Compare multiple scenarios (Chart 2.1).
-    
-    Request body:
-    {
-        "scenarios": [
-            {
-                "fleet_size": int,
-                "crews_per_vehicle": int,
-                "base_locations": [...],
-                "service_radius_miles": float,
-                "sla_target_minutes": int
-            },
-            ...
-        ]
-    }
-    """
     try:
         data = request.get_json()
         
@@ -809,7 +668,6 @@ def compare_scenarios_api():
                 'message': 'At least one scenario is required'
             }), 400
         
-        # Simulate all scenarios
         simulated_scenarios = []
         for scenario_params in scenarios_list:
             result = simulate_scenario(
@@ -844,21 +702,6 @@ def compare_scenarios_api():
 
 @app.route('/api/pareto_sensitivity', methods=['GET', 'POST'])
 def get_pareto_sensitivity_api():
-    """
-    Get Pareto sensitivity analysis data (Chart 2.3).
-    
-    Query parameters (GET) or JSON body (POST):
-    - base_locations: List of base location names (optional)
-    - radius_min: Minimum service radius (default: 20)
-    - radius_max: Maximum service radius (default: 100)
-    - radius_step: Step size for radius (default: 10)
-    - sla_min: Minimum SLA target (default: 10)
-    - sla_max: Maximum SLA target (default: 30)
-    - sla_step: Step size for SLA (default: 5)
-    - fleet_size: Fleet size (default: 3)
-    - crews_per_vehicle: Crews per vehicle (default: 2)
-    - weights: Optional weights dict {'population': float, 'sla': float, 'cost': float}
-    """
     try:
         if request.method == 'POST':
             data = request.get_json() or {}
@@ -867,7 +710,6 @@ def get_pareto_sensitivity_api():
         
         base_locations = data.get('base_locations', ['BANGOR', 'PORTLAND'])
         if isinstance(base_locations, str):
-            # Parse comma-separated string
             base_locations = [b.strip() for b in base_locations.split(',')]
         
         radius_min = float(data.get('radius_min', 20))
@@ -882,7 +724,6 @@ def get_pareto_sensitivity_api():
         
         weights = data.get('weights')
         if isinstance(weights, dict):
-            # Ensure weights sum to 1.0
             total = sum(weights.values())
             if total > 0:
                 weights = {k: v / total for k, v in weights.items()}
@@ -914,24 +755,6 @@ def get_pareto_sensitivity_api():
 
 @app.route('/api/base_siting', methods=['POST'])
 def get_base_siting_api():
-    """
-    Get base siting coverage map analysis (Chart 2.2).
-    
-    Request body:
-    {
-        "existing_bases": ["BANGOR", "PORTLAND"],
-        "candidate_base": {
-            "name": "LEWISTON",
-            "latitude": 44.1004,
-            "longitude": -70.2148
-        } (optional),
-        "service_radius_miles": 50.0,
-        "sla_target_minutes": 20,
-        "fleet_size": 3,
-        "crews_per_vehicle": 2,
-        "coverage_threshold_minutes": 20
-    }
-    """
     try:
         data = request.get_json() or {}
         
@@ -968,13 +791,6 @@ def get_base_siting_api():
 
 @app.route('/api/weather_risk', methods=['GET'])
 def get_weather_risk_api():
-    """
-    Get weather-driven risk analysis data (Chart 2.4).
-    
-    Query parameters:
-    - method: Method to define extreme weather ('precipitation', 'temperature', 'combined') (default: 'precipitation')
-    - aggregation_level: Level to aggregate missions ('day', 'month', 'week') (default: 'day')
-    """
     try:
         method = request.args.get('method', 'precipitation')
         aggregation_level = request.args.get('aggregation_level', 'day')
@@ -1009,14 +825,6 @@ def get_weather_risk_api():
 
 @app.route('/api/kpi_bullets', methods=['GET'])
 def get_kpi_bullets_api():
-    """
-    Get KPI bullets data for executive dashboard (Chart 4.1).
-    
-    Query parameters:
-    - year: Year to calculate KPIs for (default: 2023)
-    - sla_target_minutes: SLA target in minutes (default: 20)
-    - include_historical: Include historical trends (default: true)
-    """
     try:
         year = int(request.args.get('year', 2023))
         sla_target_minutes = int(request.args.get('sla_target_minutes', 20))
@@ -1041,14 +849,6 @@ def get_kpi_bullets_api():
 
 @app.route('/api/trend_wall', methods=['GET'])
 def get_trend_wall_api():
-    """
-    Get trend wall data for executive dashboard (Chart 4.2).
-    
-    Query parameters:
-    - current_year: Current year (default: 2023)
-    - current_month: Current month (optional, default: None = all months)
-    - forecast_months: Number of months to forecast ahead (default: 6)
-    """
     try:
         current_year = int(request.args.get('current_year', 2023))
         current_month = request.args.get('current_month')
@@ -1074,14 +874,6 @@ def get_trend_wall_api():
 
 @app.route('/api/cost_benefit_throughput', methods=['GET'])
 def get_cost_benefit_throughput_api():
-    """
-    Get cost-benefit-throughput dual-axis data (Chart 4.3).
-    
-    Query parameters:
-    - start_year: Start year (default: 2020)
-    - end_year: End year (default: 2023)
-    - aggregation: Aggregation level - 'month' or 'year' (default: 'month')
-    """
     try:
         start_year = int(request.args.get('start_year', 2020))
         end_year = int(request.args.get('end_year', 2023))
@@ -1106,15 +898,6 @@ def get_cost_benefit_throughput_api():
 
 @app.route('/api/safety_spc', methods=['GET'])
 def get_safety_spc_api():
-    """
-    Get safety SPC control chart data (Chart 4.4).
-    
-    Query parameters:
-    - start_year: Start year (default: 2020)
-    - end_year: End year (default: 2023)
-    - aggregation: Aggregation level - 'month', 'week', or 'year' (default: 'month')
-    - method: Control limit method - '3sigma' or 'individual' (default: '3sigma')
-    """
     try:
         start_year = int(request.args.get('start_year', 2020))
         end_year = int(request.args.get('end_year', 2023))
@@ -1138,17 +921,6 @@ def get_safety_spc_api():
             'status': 'error',
             'message': f'Failed to get safety SPC data: {str(e)}'
         }), 500
-
-@app.route('/api/test', methods=['GET'])
-def test():
-    """Test endpoint"""
-    return jsonify({
-        'message': 'Backend is working correctly',
-        'data': {
-            'timestamp': '2024-01-01T00:00:00Z',
-            'test': True
-        }
-    })
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))

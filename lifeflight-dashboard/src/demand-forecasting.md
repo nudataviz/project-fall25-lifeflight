@@ -8,9 +8,9 @@ title: Demand Forecasting
 
 ## 1.1 Prophet Model Prediction
 
-Advanced Prophet model with customizable parameters and extra regressors
+Using the Prophet model, we forecast LifeFlight’s future demand based on historical data from 2013–2023. The target is the total number of missions per month. Prophet captures long-term trends and seasonal patterns, and it also supports extra regressors to enhance forecasting performance.
 
-This model allows you to add extra regressors (like population demographics) and customize model parameters. The forecast includes historical fit and confidence intervals.
+You can adjust the model parameters below.
 
 ### Input parameters
 
@@ -75,11 +75,18 @@ const intervalWidth = view(Inputs.range([0.5, 0.99], {
 
 ```js
 const availableRegressors = [
-  "population",
-  "age_0_17",
-  "age_18_64", 
-  "age_65_plus",
-  "precipitation"
+  'age_under_5_ratio',
+  'age_5_9_ratio',
+  'age_10_19_ratio',
+  'age_20_29_ratio',
+  'age_30_39_ratio',
+  'age_40_49_ratio',
+  'age_50_59_ratio',
+  'age_60_69_ratio',
+  'age_70_79_ratio',
+  'age_80_84_ratio',
+  'age_85_plus_ratio',
+  'total_population'
 ];
 
 const extraVars = view(Inputs.checkbox(availableRegressors, {
@@ -88,8 +95,10 @@ const extraVars = view(Inputs.checkbox(availableRegressors, {
   value: []
 }))
 
-const regressorMode = view(Inputs.radio(['Additive','Multiplicative'],
-{label: "Regressor Mode",
+const regressorMode = view(Inputs.radio(['additive','multiplicative'],
+{
+  label: "Regressor Mode",
+  value: "additive"
 }
 ))
 
@@ -142,6 +151,9 @@ try{
   
 ```
 
+```js
+forecastData.data.cv_metrics
+```
 
 ```js 
 import {prepareChartData} from "./components/demand-forecasting/prepareLineChartData.js"
@@ -153,6 +165,7 @@ const chartData = forecastData?.data ? prepareChartData(forecastData) : null;
 
 ```js
 import {forecastChart} from "./components/demand-forecasting/forecastChart.js"
+import {calculateMetrics} from "./components/demand-forecasting/metrics.js"
 ```
 
 ### Predict Chart
@@ -163,8 +176,71 @@ if(error){
 }
 ```
 ```js
-chartData && forecastChart(chartData)
+forecastChart(chartData)
+```
+
+### Model Performance Metrics
+```js
+calculateMetrics(forecastData.data.cv_metrics)
 ```
 
 
-## 1.2 Seasonality & Day-of-Week/Hour Heatmap
+## 1.2 Day-of-Week/Hour Heatmap
+
+This chart aggregates historical operational data by weekday and hour to reveal cyclical patterns in LifeFlight demand. Color intensity represents the average number of missions, highlighting differences between weekdays and weekends and variations across times of day.
+
+Please select the year and month you’d like to view.
+
+```js
+const heatmapYear = view(Inputs.range([2013,2023],{
+  label:'Select Year',
+  step:1,
+  value:2013,
+  }
+))
+
+const heatmapMonth = view(Inputs.radio(
+    new Map([
+      ["JAN", 1],
+      ["FEB", 2],
+      ["MAR", 3],
+      ["APR", 4],
+      ["MAY", 5],
+      ["JUN", 6],
+      ["JUL", 7],
+      ["AUG", 8],
+      ["SEP", 9],
+      ["OCT", 10],
+      ["NOV", 11],
+      ["DEC", 12],
+    ]),
+    {value: 1, label: "Select Month", format: ([name, value]) => `${name}`}
+  ))
+```
+
+
+```js
+// fetch 1.2
+const heatmapParams = new URLSearchParams({
+  year: heatmapYear.toString(),
+  month: heatmapMonth.toString(),
+})
+const heatMapResponse = await fetch(`http://localhost:5001/api/seasonality_heatmap?${heatmapParams}`)
+if (!heatMapResponse.ok) {
+    const errorData = await heatMapResponse.json();
+    throw new Error(errorData.message || `HTTP error! status: ${heatMapResponse.status}`);
+  }
+```
+
+```js
+const heatmapData= await heatMapResponse.json()
+```
+
+
+```js
+import {demandHeatmap} from "./components/demand-forecasting/demandHeatmap.js"
+```
+
+```js
+demandHeatmap(heatmapData.data,heatmapYear,heatmapMonth)
+```

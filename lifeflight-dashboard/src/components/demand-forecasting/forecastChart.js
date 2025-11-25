@@ -42,7 +42,7 @@ export function forecastChart(data) {
         y: "value",
         stroke: "#2E86C1",
         strokeWidth: 2,
-        tip: true
+        tip: false,
       }),
       // predict
       Plot.lineY(predictedData, {
@@ -51,7 +51,7 @@ export function forecastChart(data) {
         stroke: "green",
         strokeWidth: 2,
         strokeDasharray: "4,2",
-        tip: true
+        tip: false,
       }),
       // historical data separator line
       lastActualDate ? Plot.ruleX([lastActualDate], {
