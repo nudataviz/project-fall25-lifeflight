@@ -1,60 +1,39 @@
 # Lifeflight Dashboard
+
 An interactive data visualization dashboard for analyzing medical transport services data.
-# Current Feature
-- Interactive geographic visualizations using Folium maps. 
+
+# Current Features
+
+- ~~Interactive geographic visualizations using Folium maps.~~
 - Time series forecasting with Prophet for demand prediction.
 - Hour-by-weekday heatmap visualization.
+
 # Tech Stack
+
 ### Backend:
-- Python with Flask framework
+- Python with Flask framework (see backend/requirements.txt)
+- Requires Python 3.9 or higher (developed with Python 3.12)
+
 ### Frontend:
 - Observable Framework
-### Prerequisites
-- **Python 3.9 or higher** (developed with Python 3.12)
-- **Node.js 18 or higher** (developed with Node.js 23)
+- Requires Node.js 18 or higher (developed with Node.js 23)
 
-# Setup Instructions
-### Backend Setup
-- Navigate to the backend directory:
-```bash
-cd backend
+### Start the backend
 ```
-- Create and activate a virtual environment(for Mac):
-```bash
-python -m venv venv
-source venv/bin/activate
+python backend/app.py
 ```
-- Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-- Start the backend server:
-```bash
-python app.py
-```
-The backend API will be available at: `
-http://localhost:5001/
-`
+The backend API will be available at: `http://localhost:5001/`
 
-### Frontend Setup
-- Navigate to the frontend directory:
-```bash
+### Start the Framework app
+
+```
 cd lifeflight-dashboard
-```
-- Install Node.js dependencies:
-```bash
-npm install
-```
-
-- Start the development server:
-```bash
 npm run dev
 ```
-
-
 The frontend will be available at: `http://127.0.0.1:3000/ `
 
-# Extra Data Sources
+# Data Sources
+
 - **Maine Population Projections**:：https://www.maine.gov/dafs/economist/demographic-projections
 - **Historical Population Data**：https://www.census.gov/data/developers/data-sets/acs-1year.html
 
