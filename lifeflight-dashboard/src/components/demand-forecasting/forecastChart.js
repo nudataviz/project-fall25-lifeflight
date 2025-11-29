@@ -70,14 +70,14 @@ export function forecastChart(data) {
         y: "value",
         fill: "#2E86C1",
         r: 3,
-        tip: true
+        tip: 'xy'
       }),
       Plot.dot(predictedData, {
         x: "date",
         y: "value",
         fill: "#28B463",
         r: 3,
-        tip: true
+        tip: 'xy'
       })
     ].filter(Boolean), 
     legend: {

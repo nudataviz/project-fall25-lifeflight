@@ -74,34 +74,32 @@ def _compute_summary(values: pd.Series) -> Dict[str, float]:
 
 def get_boxplot() -> Dict[str, Any]:
     """
-    Prepare boxplot data grouped by vehicle.
+    Prepare boxplot data - returns raw data rows plus summary statistics.
 
     Returns:
-        Dict containing ordered vehicle groups with values and summary statistics.
+        Dict containing:
+        - data: List of raw data rows with 'veh' and 'mileage' fields
+        - summary: Dict of summary statistics per vehicle
+        - metadata: Dataset metadata
     """
     df = _load_clean_data()
 
-    result: List[Dict[str, Any]] = []
-
-    for veh in VEH_ORDER:
-        subset = df[df[VEH_COLUMN] == veh][MILEAGE_COLUMN]
-        if subset.empty:
-            continue
-
-        values = subset.round(2).tolist()
-        summary = _compute_summary(subset)
-
-        result.append({
-            'veh': veh,
-            'values': values,
-            'summary': summary,
+    # Prepare raw data rows for frontend (Observable Plot boxY format)
+    raw_data = []
+    for _, row in df.iterrows():
+        raw_data.append({
+            'veh': str(row[VEH_COLUMN]).strip(),
+            'mileage': round(float(row[MILEAGE_COLUMN]), 2)
         })
 
+    # Compute summary statistics per vehicle
+    summary_by_veh: Dict[str, Dict[str, float]] = {}
+    for veh in VEH_ORDER:
+        subset = df[df[VEH_COLUMN] == veh][MILEAGE_COLUMN]
+        if not subset.empty:
+            summary_by_veh[veh] = _compute_summary(subset)
+
     return {
-        'vehicles': result,
-        'metadata': {
-            'total_records': int(len(df)),
-            'dataset': 'roux_clean_veh_data.csv',
-            'mileage_unit': 'miles',
-        }
+        'data': raw_data,
+        'summary': summary_by_veh
     }
