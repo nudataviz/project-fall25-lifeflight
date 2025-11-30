@@ -20,3 +20,17 @@ def get_time_diff_seconds(df: pd.DataFrame, start_time_col: str, end_time_col: s
     time_diff = (end_time - start_time).dt.total_seconds()
     
     return time_diff
+
+def clean_time(df: pd.DataFrame, time_col: str) -> pd.DataFrame:
+    """
+    delete the sample with minus time
+    
+    Args:
+    df: DataFrame   
+    time_col: str, the column name of the time
+    
+    Returns:
+    DataFrame
+    """
+    df = df[df[time_col] >= 0]
+    return df

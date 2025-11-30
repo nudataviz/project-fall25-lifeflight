@@ -2,7 +2,7 @@
 title: Scenario-modeling
 ---
 
-# 1 Scenario Modeling
+# 2 Scenario Modeling
 
 <br/>
 
@@ -103,7 +103,6 @@ if(dateSetFile=='Roux(2012-2023)'){
 ```
 
 ```js
-// 获取地图 HTML
 let mapHtml = null
 let mapError = null
 
@@ -189,26 +188,138 @@ const x = Generators.input(colors);
 
 ```js
 const existBase = Inputs.checkbox(['BANGOR', 'LEWISTON', 'SANFORD'], {label: "Existing Base Locations",value:['BANGOR', 'LEWISTON', 'SANFORD']});
+
 const optionalBase = Inputs.checkbox([
         'ROCKPORT', 'AUGUSTA', 'BELFAST', 'WATERVILLE',
         'SKOWHEGAN', 'BRIDGTON', 'PRESQUE ISLE', 'PORTLAND',
         'BIDDEFORD', 'AUBURN'
     ], {label: "Add more Base Locations"});
-const serviceRadius = Inputs.range([20,350], {label: "Service Radius (miles)", value: 50, step:1})
-```
 
+const serviceRadius = Inputs.range([20,300], {label: "Service Radius (miles)", value: 40, step:1})
+
+const expectedTime = Inputs.range([10,50],{label: "Expected Dispatch-to-Patient Time(Minutes)", value: 20, step:1})
+```
+```html
 ${existBase}
 ${optionalBase}
 ${serviceRadius}
+${expectedTime}
+```
 
 
-% s>>>
 ```js
 const existBaseValue = Generators.input(existBase);
 const optionalBaseValue = Generators.input(optionalBase);
 const serviceRadiusValue = Generators.input(serviceRadius)
+const expectedTimeValue = Generators.input(expectedTime)
 ```
+
+这里也需要计算时间，所以要用master数据集
+
+## General Base Evaluation 
 ```js
-display(existBaseValue)
-display(optionalBaseValue)
+let rangeMapHtml = null
+let rangeMapError = null
+let rangeMapStats = null
+
+if(existBaseValue && existBaseValue.length > 0){
+  try{
+    const allBases = [...existBaseValue, ...(optionalBaseValue || [])]
+    
+    const params = new URLSearchParams()
+    allBases.forEach(base => {
+      params.append('baseValue', base)
+    })
+    params.append('radius', serviceRadiusValue)
+    params.append('expectedTime', expectedTimeValue)
+    
+    const rangeMapResponse = await fetch(`http://localhost:5001/api/get_range_map?${params}`)
+    if(!rangeMapResponse.ok){
+      throw new Error(`HTTP ${rangeMapResponse.status}: ${rangeMapResponse.statusText}`)
+    }
+    const rangeMapData = await rangeMapResponse.json()
+    rangeMapHtml = rangeMapData.map_html
+    rangeMapStats = rangeMapData.statistics
+    rangeMapError = null
+  }catch(e){
+    rangeMapError = e.message
+    rangeMapHtml = null
+    rangeMapStats = null
+    console.error('Range map fetch error:', e)
+  }
+}
 ```
+
+```js
+// 显示统计信息
+if(rangeMapStats){
+  display(html`<div style="margin-top: 20px;">
+    <h3>Coverage Statistics</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 15px;">
+      ${Object.entries(rangeMapStats.coverage_stats || {}).map(([base, count]) => {
+        return html`<div class="card">
+          <h4>${base}</h4>
+          <p style="font-size: 18px; font-weight: bold; color: #2E86C1; margin: 10px 0;">
+            ${count} cities covered
+          </p>
+        </div>`;
+      })}
+    </div>
+    
+    <div class="card" style="margin-top: 15px;">
+      <h4>Compliance Statistics</h4>
+      <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+        <tr>
+          <td style="padding: 8px; color: #666;">Total Tasks:</td>
+          <td style="padding: 8px; text-align: right; font-weight: 500;">${rangeMapStats.compliance_stats?.total_tasks || 0}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; color: #666;">Compliant Tasks:</td>
+          <td style="padding: 8px; text-align: right; font-weight: 500; color: #28B463;">${rangeMapStats.compliance_stats?.compliant_tasks || 0}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; color: #666;">Compliance Rate:</td>
+          <td style="padding: 8px; text-align: right; font-weight: 500; color: #28B463;">${rangeMapStats.compliance_stats?.compliance_rate?.toFixed(2) || 0}%</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; color: #666;">Avg Response Time:</td>
+          <td style="padding: 8px; text-align: right; font-weight: 500;">${rangeMapStats.compliance_stats?.avg_response_time?.toFixed(2) || 0} minutes</td>
+        </tr>
+      </table>
+    </div>
+  </div>`)
+}
+```
+
+
+```js
+// 显示地图
+if(rangeMapError){
+  display(html`<div class="card" style="padding: 20px; color: red;">
+    <h3>Error loading range map</h3>
+    <p>${rangeMapError}</p>
+  </div>`)
+} else if(rangeMapHtml){
+  display(html`
+    <div class="card" style="overflow: hidden;">
+      <h2>Service Range Map</h2>
+      <h3 style="color: #666;">
+        Service coverage with ${serviceRadiusValue} mile radius
+      </h3>
+      <iframe 
+        srcdoc=${rangeMapHtml}
+        style="width: 100%; height: 500px; border: none;"
+        title="Range Map"
+      ></iframe>
+    </div>
+  `)
+} else if(!existBaseValue || existBaseValue.length === 0){
+  display(html`<div class="card" style="padding: 20px; color: #666;">
+    <p>Please select at least one base location to view the range map.</p>
+  </div>`)
+}
+```
+
+## Special Base Evaluation
+
+Special Base: B-CCT, L-CCT, S-CCT, neoGround

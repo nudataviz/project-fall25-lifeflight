@@ -377,7 +377,6 @@ def get_heatmap_by_base():
     try:
         dataset = request.args.get('dataset', 'Roux(2012-2023)')
         base_places = request.args.get('base_places', 'ALL')
-        
         from utils.scenario.get_heatmap import generate_heatmap_by_base
         
         # Generate heatmap HTML
@@ -814,6 +813,46 @@ def get_pareto_sensitivity_api():
             'status': 'error',
             'message': f'Failed to get Pareto sensitivity analysis: {str(e)}'
         }), 500
+
+# ======== scenario modeling page - range map =========
+@app.route('/api/get_range_map', methods=['GET'])
+def get_range_map_api():
+    """Get range map with heatmap, service radius circles, and statistics"""
+    try:
+        # Get parameters - baseValue can be multiple values
+        base_value = request.args.getlist('baseValue')  # Use getlist for multiple values
+        if not base_value:
+            base_value = ['BANGOR', 'PORTLAND']  # Default
+        
+        radius = request.args.get('radius', 50.0, type=float)
+        expected_time = request.args.get('expectedTime', 20.0, type=float)  # 注意前端传的是 expectedTime
+        
+        from utils.scenario.get_range_map import (
+            generate_range_map, 
+            calculate_range_statistics
+        )
+        
+        # Generate map HTML
+        html_map = generate_range_map(base_value, radius, expected_time)
+        
+        # Calculate statistics
+        stats = calculate_range_statistics(base_value, radius, expected_time)
+        
+        # Return both map HTML and statistics
+        # Since we need to return HTML for iframe, we'll return HTML with embedded data
+        # Or we can return JSON with map HTML as a field
+        return jsonify({
+            'status': 'success',
+            'map_html': html_map,
+            'statistics': stats
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Failed to get range map: {str(e)}'
+        }), 500
+    
 
 @app.route('/api/base_siting', methods=['POST'])
 def get_base_siting_api():
