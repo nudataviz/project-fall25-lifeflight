@@ -8,7 +8,7 @@ title: Scenario-modeling
 
 <!-- 分析数据 -->
 
-## 2.1 Vehicle Mileage Distribution
+## 2.1 Analysis of the Existing Base
 
 ```js
 const response = await fetch('http://localhost:5001/api/boxplot')
@@ -32,13 +32,11 @@ boxPlot(boxplotData)
 ```
 
 ```js
-// 使用 HTML 显示统计摘要信息
 html`<div style="margin-top: 20px;">
   <h3>Vehicle Mileage Statistics</h3>
   <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 15px;">
     ${Object.keys(summary || {}).map(veh => {
       const stats = summary[veh];
-      // 定义字段名称映射
       const fieldLabels = {
         count: 'Count',
         min: 'Min',
