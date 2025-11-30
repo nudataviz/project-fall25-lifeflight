@@ -25,6 +25,7 @@ from utils.kpi_bullets_4_1 import get_kpi_bullets
 from utils.trend_wall_4_2 import get_trend_wall_data
 from utils.cost_benefit_4_3 import get_cost_benefit_throughput_data
 from utils.safety_spc_4_4 import get_safety_spc_data
+from utils.scenario.get_time_diff import get_time_diff_seconds
 
 app = Flask(__name__)
 
@@ -391,7 +392,43 @@ def get_heatmap_by_base():
             'message': f'Failed to generate heatmap: {str(e)}'
         }), 500
 
+@app.route('/api/get_master_response_time', methods=['GET'])
+def get_master_response_time():
+    """Get master data with response time"""
+    df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'data', '1_demand_forecasting', 'FlightTransportsMaster.csv'))
+    # enrtime: vehicle departure time
+    # atstime: vehicle arrival time at scene
+    df = df[['enrtime', 'atstime','PU State','PU City','TASC Primary Asset ']]
+    df = df[df['PU State'] == 'Maine']
+    # 只留有10个样本以上的城市：
+    df = df[df['PU City'].isin(df['PU City'].value_counts().index[df['PU City'].value_counts() > 30])]
+    df['time_diff_seconds'] = get_time_diff_seconds(df, 'enrtime', 'atstime')
 
+    df['time_diff_minutes'] = (df['time_diff_seconds'] / 60).round(3)
+    # df['time_diff_hours'] = (df['time_diff_minutes'] / 3600).round(3)
+
+    #clean
+    df = df[(df['time_diff_seconds']>0) & (df['time_diff_minutes']<400)]
+    df = df[df['TASC Primary Asset '].notna()]
+    print(df['time_diff_minutes'].describe())
+
+
+    # Replace NaN with None for JSON serialization
+    df = df.replace({np.nan: None, pd.NA: None})
+    
+    # Convert to dict and handle NaN values
+    data = df.to_dict(orient='records')
+    
+    # Additional cleanup: replace any remaining NaN/NaT values
+    for record in data:
+        for key, value in record.items():
+            if pd.isna(value):
+                record[key] = None
+
+    return jsonify({
+        'status': 'success',
+        'data': data
+    })
 
 @app.route('/api/hourly_departure', methods=['GET'])
 def get_hourly_departure():

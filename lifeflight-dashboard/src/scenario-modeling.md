@@ -148,11 +148,27 @@ html`
   `
 ```
 
-接下来分析从出发到接到病人的时间，由于roux数据的时间有问题，这里只选择master的数据来分析
+接下来分析从出发到接到病人的时间，由于roux数据的时间有问题，这里只选择master的数据来分析。
 
+- 下面这幅图可以看出，每个城市在转运任务上都有自己偏好的基地。，因为城市的散点颜色都较为一致。我们需要重点关注靠右边的这些散点，比如portland，几个运送新生儿的任务用了明显较长的时间，而响应时间快的任务都是有LF3 LF4负责，说明neoGround离protland太远了，可以考虑建一个近的。
 
+```js
+const timeDiffResponse = await fetch('http://localhost:5001/api/get_master_response_time')
 
+const response_time = await timeDiffResponse.json() 
+```
 
+```js
+const responseTimeData = response_time.data || []
+```
+
+```js
+import {responseTimeChart} from "./components/scenario-modeling/responseTimeChart.js"
+```
+
+```js
+responseTimeChart(responseTimeData)
+```
 
 
 
