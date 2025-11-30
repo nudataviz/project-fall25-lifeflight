@@ -1,6 +1,6 @@
 import * as Plot from "npm:@observablehq/plot";
 
-export const boxPlot = (data, summary = null) => {
+export const boxPlot = (data, showOutlier) => {
 
   return Plot.plot({
     marginLeft: 60,
@@ -17,6 +17,7 @@ export const boxPlot = (data, summary = null) => {
       Plot.boxY(data, {
         fx: "veh", 
         y: "mileage",
+        r: showOutlier ? 3 : 0,
       }),
   ],
   })

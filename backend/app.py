@@ -204,7 +204,7 @@ def get_corr_matrix():
             'message': f'Failed to load correlation matrix: {str(e)}'
         }), 500
 
-    
+# ======== forecasting demand page - seasonality heatmap =========
 @app.route('/api/seasonality_heatmap', methods=['GET'])
 def get_seasonality_heatmap_api():
     try:
@@ -369,6 +369,30 @@ def get_seasonality_heatmap_api():
             'message': f'Failed to get seasonality heatmap: {str(e)}'
         }), 500
     
+# ======== scenario modeling page - heatmap by base locations =========
+@app.route('/api/heatmap_by_base', methods=['GET'])
+def get_heatmap_by_base():
+    """Get heatmap by base locations"""
+    try:
+        dataset = request.args.get('dataset', 'Roux(2012-2023)')
+        base_places = request.args.get('base_places', 'ALL')
+        
+        from utils.scenario.get_heatmap import generate_heatmap_by_base
+        
+        # Generate heatmap HTML
+        html_map = generate_heatmap_by_base(dataset, base_places)
+        
+        # Return HTML
+        return html_map
+        
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Failed to generate heatmap: {str(e)}'
+        }), 500
+
+
+
 @app.route('/api/hourly_departure', methods=['GET'])
 def get_hourly_departure():
     """Get hourly departure density data"""
