@@ -852,6 +852,135 @@ def get_range_map_api():
             'status': 'error',
             'message': f'Failed to get range map: {str(e)}'
         }), 500
+
+
+# ======== scenario modeling page - special base evaluation =========
+@app.route('/api/get_special_base_speeds', methods=['GET'])
+def get_special_base_speeds():
+    """Get median speeds for all special bases"""
+    try:
+        from utils.scenario.get_special_base_stats import calculate_special_base_speeds
+        
+        speeds = calculate_special_base_speeds()
+        
+        return jsonify({
+            'status': 'success',
+            'speeds': speeds
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Failed to get special base speeds: {str(e)}'
+        }), 500
+
+
+@app.route('/api/get_maine_cities', methods=['GET'])
+def get_maine_cities():
+    """Get list of Maine cities for dropdown selection"""
+    try:
+        from utils.heatmap import get_city_coordinates
+        
+        city_coords = get_city_coordinates(isOnlyMaine=True)
+        cities = sorted(list(city_coords.keys()))
+        
+        return jsonify({
+            'status': 'success',
+            'cities': cities
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Failed to get cities: {str(e)}'
+        }), 500
+
+
+@app.route('/api/get_special_base_statistics', methods=['GET'])
+def get_special_base_statistics():
+    """Get statistics for a specific special base"""
+    try:
+        center_type = request.args.get('centerType')
+        radius = request.args.get('radius', 50.0, type=float)
+        expected_time = request.args.get('expectedTime', 20.0, type=float)
+        base_cities_input = request.args.get('baseCities', None)  # Optional, comma-separated cities
+        
+        # Parse and validate cities on backend
+        valid_cities = []
+        if base_cities_input:
+            from utils.heatmap import get_city_coordinates
+            city_coords = get_city_coordinates(isOnlyMaine=True)
+            city_coords_set = set(city.upper().strip() for city in city_coords.keys())
+            
+            # Parse comma-separated cities
+            cities = base_cities_input.split(',')
+            for city in cities:
+                normalized = city.strip().upper()
+                if normalized and normalized in city_coords_set:
+                    valid_cities.append(normalized)
+            # 新的城市，是列表里所有的城市（去重）
+            valid_cities = list(set(valid_cities))
+        
+        if not center_type:
+            return jsonify({
+                'status': 'error',
+                'message': 'centerType parameter is required'
+            }), 400
+        
+        from utils.scenario.get_special_base_stats import (
+            calculate_special_base_statistics,
+            get_special_base_data
+        )
+        from utils.scenario.get_range_map import generate_range_map
+        from utils.heatmap import get_city_coordinates
+        from utils.getData import read_data
+        
+        # Determine which cities to use
+        city_coords = get_city_coordinates(isOnlyMaine=True)
+        df = read_data('FlightTransportsMaster.csv')
+        df = df[df['PU State'] == 'Maine']
+        if 'TASC Primary Asset ' in df.columns:
+            df.rename(columns={'TASC Primary Asset ': 'TASC Primary Asset'}, inplace=True)
+        df_center = df[df['TASC Primary Asset'] == center_type]
+        
+        # Get base cities: use valid_cities if provided, otherwise use main base city
+        base_cities_list = []
+        if valid_cities:
+            base_cities_list = valid_cities
+        elif len(df_center) > 0:
+            city_counts = df_center['PU City'].value_counts(ascending=False)
+            main_base_city = city_counts.index[0] if len(city_counts) > 0 else None
+            if main_base_city:
+                base_cities_list = [main_base_city]
+        
+        # Calculate statistics with all base cities
+        stats = calculate_special_base_statistics(
+            center_type, 
+            radius, 
+            expected_time,
+            base_cities_list  # Pass list of cities
+        )
+        
+        # Generate map with all base cities
+        if base_cities_list:
+            html_map = generate_range_map(base_cities_list, radius, expected_time,center_type)
+        else:
+            html_map = None
+        
+        return jsonify({
+            'status': 'success',
+            'map_html': html_map,
+            'statistics': stats
+        })
+        
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f"Error in get_special_base_statistics: {str(e)}")
+        print(error_trace)
+        return jsonify({
+            'status': 'error',
+            'message': f'Failed to get special base statistics: {str(e)}',
+            'trace': error_trace
+        }), 500
     
 
 @app.route('/api/base_siting', methods=['POST'])
@@ -1021,6 +1150,47 @@ def get_safety_spc_api():
         return jsonify({
             'status': 'error',
             'message': f'Failed to get safety SPC data: {str(e)}'
+        }), 500
+    
+
+@app.route('/api/test', methods=['GET'])
+def get_test_api():
+    try:
+        df = read_data('Oasis.csv')
+        print(df['Add Date'].head())
+        df['Add Date'] = pd.to_datetime(df['Add Date'])
+        df['Year'] = df['Add Date'].dt.year
+        df['Month'] = df['Add Date'].dt.month
+        df.rename(columns={'responseDelay (Subjective and with no objective time for them to decide, none or select reason, just gustalt)':'responseDelay'},inplace=True)
+        df.rename(columns={'transportByPrimaryQ (Did the appropriate asset transport the patient without delay)':'transportByPrimaryQ'},inplace=True)
+        df = df[df['Year'] == 2024]
+        df['responseDelay'] = df['responseDelay'].fillna('')
+        df['delay_list'] = df['responseDelay'].str.split('|')
+        
+        df = df.replace({np.nan: None, pd.NA: None, pd.NaT: None})
+        df = df[df['respondingAssets'].isin(['l1','l2','l3','l4'])]
+        df_exp = df.explode('delay_list')
+        df_exp = df_exp[(df_exp['delay_list'] != '')&(df_exp['delay_list']!='noDelays')]
+        reason_counts = (
+            df_exp['delay_list']
+            .value_counts()
+            .reset_index()
+        )
+        reason_counts.columns = ['reason', 'count']
+        print(reason_counts.head())
+        df_delay_reason = df_exp.groupby(['delay_list','respondingAssets']).size().reset_index(name='count')
+        delayData = df_exp.groupby(['respondingAssets','transportByPrimaryQ']).size().reset_index(name='count')
+        print(delayData['count'].describe())
+        return jsonify({
+            'status': 'success',
+            'data': df.to_dict(orient='records'),
+            'delayData':delayData.to_dict(orient='records'),
+            'delayReasonData':reason_counts.to_dict(orient='records')
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Failed to get test data: {str(e)}'
         }), 500
 
 if __name__ == '__main__':

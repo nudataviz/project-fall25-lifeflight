@@ -323,3 +323,230 @@ if(rangeMapError){
 ## Special Base Evaluation
 
 Special Base: B-CCT, L-CCT, S-CCT, neoGround
+
+```js
+// 获取所有special base的速度
+const speedsResponse = await fetch('http://localhost:5001/api/get_special_base_speeds')
+const speedsData = await speedsResponse.json()
+const baseSpeeds = speedsData.speeds || {}
+```
+
+```js
+// 显示速度统计
+if(Object.keys(baseSpeeds).length > 0){
+  display(html`<div class="card" style="margin-top: 20px;">
+    <h3>Special Base Speed Statistics</h3>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+      ${Object.entries(baseSpeeds).map(([base, speed]) => {
+        return html`<tr>
+          <td style="padding: 8px; color: #666;">${base}:</td>
+          <td style="padding: 8px; text-align: right; font-weight: 500;">${speed.toFixed(2)} mph</td>
+        </tr>`;
+      })}
+    </table>
+  </div>`)
+}
+```
+
+```js
+// 选择center类型
+const centerType = Inputs.radio(['neoGround', 'L-CCT', 'B-CCT', 'S-CCT'], {
+  label: "Select Center Type",
+  value: 'neoGround'
+})
+```
+
+```js
+centerType
+```
+
+```js
+const selectedCenterType = Generators.input(centerType)
+```
+
+```js
+// 参数输入
+const specialBaseRadius = Inputs.range([20, 300], {label: "Service Radius (miles)", value: 50, step: 1})
+const specialBaseExpectedTime = Inputs.range([10, 50], {label: "Expected Dispatch-to-Patient Time (Minutes)", value: 20, step: 1})
+```
+
+```html
+${specialBaseRadius}
+${specialBaseExpectedTime}
+```
+
+```js
+const specialBaseRadiusValue = Generators.input(specialBaseRadius)
+const specialBaseExpectedTimeValue = Generators.input(specialBaseExpectedTime)
+```
+
+```js
+// 获取城市列表
+const citiesResponse = await fetch('http://localhost:5001/api/get_maine_cities')
+const citiesData = await citiesResponse.json()
+const maineCities = citiesData.cities || []
+const maineCitiesSet = new Set(maineCities.map(c => c.toUpperCase().trim()))
+```
+
+```js
+// 获取当前center的初始base城市
+let initialBaseCity = null
+if(selectedCenterType){
+  try{
+    const tempParams = new URLSearchParams({
+      centerType: selectedCenterType,
+      radius: 50,
+      expectedTime: 20
+    })
+    const tempResponse = await fetch(`http://localhost:5001/api/get_special_base_statistics?${tempParams}`)
+    if(tempResponse.ok){
+      const tempData = await tempResponse.json()
+      // 从coverage_stats中获取初始base城市
+      const coverageStats = tempData.statistics?.coverage_stats || {}
+      initialBaseCity = Object.keys(coverageStats)[0] || null
+    }
+  }catch(e){
+    console.error('Error getting initial base city:', e)
+  }
+}
+
+```
+
+```js
+// 使用Inputs.textarea创建输入框，初始值为初始base城市
+const cityTextarea = Inputs.textarea({
+  label: "Base Cities (comma-separated)",
+  placeholder: "Enter city names separated by commas (e.g., PORTLAND, BANGOR)",
+  value: initialBaseCity || "",
+  rows: 4,
+  submit: true
+})
+```
+
+```js
+cityTextarea
+```
+
+```js
+// 获取输入值（直接发送给后端处理）
+const cityTextareaValue = Generators.input(cityTextarea)
+```
+
+```js
+// 获取special base统计信息
+let specialBaseMapHtml = null
+let specialBaseStats = null
+let specialBaseError = null
+
+if(selectedCenterType){
+  try{
+    const params = new URLSearchParams({
+      centerType: selectedCenterType,
+      radius: specialBaseRadiusValue,
+      expectedTime: specialBaseExpectedTimeValue
+    })
+    
+    // 发送城市列表给后端处理（如果有输入）
+    if(cityTextareaValue && typeof cityTextareaValue === 'string' && cityTextareaValue.trim()){
+      params.append('baseCities', cityTextareaValue)
+    }
+    
+    const specialBaseResponse = await fetch(`http://localhost:5001/api/get_special_base_statistics?${params}`)
+    if(!specialBaseResponse.ok){
+      throw new Error(`HTTP ${specialBaseResponse.status}: ${specialBaseResponse.statusText}`)
+    }
+    const specialBaseData = await specialBaseResponse.json()
+    specialBaseMapHtml = specialBaseData.map_html
+    specialBaseStats = specialBaseData.statistics
+    specialBaseError = null
+  }catch(e){
+    specialBaseError = e.message
+    specialBaseMapHtml = null
+    specialBaseStats = null
+    console.error('Special base fetch error:', e)
+  }
+}
+```
+
+```js
+// 显示统计信息
+if(specialBaseStats){
+  display(html`<div style="margin-top: 20px;">
+    <h3>Special Base Statistics - ${selectedCenterType}</h3>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 15px;">
+      ${Object.entries(specialBaseStats.coverage_stats || {}).map(([base, count]) => {
+        return html`<div class="card">
+          <h4>${base}</h4>
+          <p style="font-size: 18px; font-weight: bold; color: #2E86C1; margin: 10px 0;">
+            ${count} cities covered
+          </p>
+        </div>`;
+      })}
+    </div>
+    
+    <div class="card" style="margin-top: 15px;">
+      <h4>Speed Statistics</h4>
+      <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+        <tr>
+          <td style="padding: 8px; color: #666;">Median Speed:</td>
+          <td style="padding: 8px; text-align: right; font-weight: 500;">${specialBaseStats.speed_stats?.median_speed_mph?.toFixed(2) || 0} mph</td>
+        </tr>
+      </table>
+    </div>
+    
+    <div class="card" style="margin-top: 15px;">
+      <h4>Compliance Statistics</h4>
+      <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+        <tr>
+          <td style="padding: 8px; color: #666;">Total Tasks:</td>
+          <td style="padding: 8px; text-align: right; font-weight: 500;">${specialBaseStats.compliance_stats?.total_tasks || 0}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; color: #666;">Compliant Tasks:</td>
+          <td style="padding: 8px; text-align: right; font-weight: 500; color: #28B463;">${specialBaseStats.compliance_stats?.compliant_tasks || 0}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; color: #666;">Compliance Rate:</td>
+          <td style="padding: 8px; text-align: right; font-weight: 500; color: #28B463;">${specialBaseStats.compliance_stats?.compliance_rate?.toFixed(2) || 0}%</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; color: #666;">Avg Response Time:</td>
+          <td style="padding: 8px; text-align: right; font-weight: 500;">${specialBaseStats.compliance_stats?.avg_response_time?.toFixed(2) || 0} minutes</td>
+        </tr>
+      </table>
+    </div>
+  </div>`)
+}
+```
+
+```js
+// 显示地图
+if(specialBaseError){
+  display(html`<div class="card" style="padding: 20px; color: red;">
+    <h3>Error loading special base map</h3>
+    <p>${specialBaseError}</p>
+  </div>`)
+} else if(specialBaseMapHtml){
+  display(html`
+    <div class="card" style="overflow: hidden;">
+      <h2>Special Base Range Map - ${selectedCenterType}</h2>
+      <h3 style="color: #666;">
+        Service coverage with ${specialBaseRadiusValue} mile radius
+        ${cityTextareaValue && cityTextareaValue.trim() ? `(Base Cities: ${cityTextareaValue})` : ''}
+      </h3>
+      <iframe 
+        srcdoc=${specialBaseMapHtml}
+        style="width: 100%; height: 500px; border: none;"
+        title="Special Base Range Map"
+      ></iframe>
+    </div>
+  `)
+} else if(!selectedCenterType){
+  display(html`<div class="card" style="padding: 20px; color: #666;">
+    <p>Please select a center type to view the map.</p>
+  </div>`)
+}
+```
+
+

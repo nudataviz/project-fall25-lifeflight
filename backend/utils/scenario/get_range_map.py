@@ -242,7 +242,8 @@ def calculate_range_statistics(
 def generate_range_map(
     base_names: List[str],
     radius_miles: float,
-    expected_time: float
+    expected_time: float,
+    center_type: Optional[str] = None
 ) -> str:
     """
     Generate map with heatmap and service radius circles.
@@ -257,7 +258,8 @@ def generate_range_map(
     # Load data for heatmap
     df = read_data('FlightTransportsMaster.csv')
     df = df[df['PU State'] == 'Maine']
-
+    if center_type:
+        df = df[df['TASC Primary Asset '] == center_type]
     
     # Get city coordinates
     city_coords = get_city_coordinates(isOnlyMaine=True)

@@ -45,6 +45,30 @@ try{
 </div>
 
 
+```js
+let resTest=null
+let data = null
+resTest = await fetch('http://localhost:5001/api/test')
+data = await resTest.json()
+```
+
+
+```js
+import {delayPlot} from './components/dashboard-kpi/delayRatePlot.js'
+import {delayReasonPlot} from './components/dashboard-kpi/delayReasonPlot.js'
+```
+
+
+<div style='display: flex;align-items: center;'>
+<div class='card'>
+${delayPlot(data.delayData)}
+</div>
+<div class='card'>
+${delayReasonPlot(data.delayReasonData)}
+</div>
+
+</div>
+
 <!-- map -->
 ```js
 let mapHtml = null
@@ -71,12 +95,15 @@ try{
       Heatmap of all patient transports from July 2012 to December 2023, based on pickup city locations.</h3>
       <iframe 
         srcdoc=${mapHtml}
-        style="width: 100%; height: 600px; border: none;"
+        style="width: 100%; height: 500px; border: none;"
         title="Heatmap"
       ></iframe>
     </div>
   `
 ```
+
+
+
 
 <!--  
 <div class="grid grid-cols-2" style="grid-auto-rows: 504px;">
