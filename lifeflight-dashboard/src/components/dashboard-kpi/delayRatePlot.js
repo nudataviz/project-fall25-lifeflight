@@ -26,7 +26,7 @@ export function delayPlot(data) {
     title: "Delay Rate(2024)",
     axis: null,
     label: null,
-    height: 400,
+    height: 200,
     marginTop: 20,
     marginBottom: 70,
     fx: {

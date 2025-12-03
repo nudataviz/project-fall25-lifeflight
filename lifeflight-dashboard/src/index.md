@@ -23,10 +23,11 @@ try{
   <a href="https://lifeflightmaine.org/">LifeFlight Website<span style="display: inline-block; margin-left: 0.25rem;">↗︎</span></a>
 </div>
 
+这里是当前月份的情况。因为我们没有实时的数据，所以用能拿到的最新的数据作为样板，即2024年8月。
 <!-- indicator card -->
 <div class="grid grid-cols-4">
   <div class="card">
-    <h2>📈 Total Missions Completed(2012.7-2023.12)</h2>
+    <h2>📈 Total Missions Completed(2024.08)</h2>
     <span class="big">${indicatorData?.data?.total_missions}</span>
   </div>
   <div class="card">
@@ -44,7 +45,74 @@ try{
   </div>
 </div>
 
+--- 时间分析（主要数据，
+1. 本月响应时间和任务量的24h分布图
 
+```js
+const responseDis = await fetch('http://localhost:5001/api/get_24hour_distribution')
+const dataDis = await responseDis.json()
+```
+```js
+dataDis
+```
+# 1 本月任务量分布图
+```js
+import {missionDisPlot} from './components/dashboard-kpi/missionDisPlot.js'
+```
+```js
+const distributionMode = view(Inputs.select(
+  ["hourly", "weekday"],
+  {
+    label: "Distribution Type",
+    value: "hourly",
+    format: (x) => x === "hourly" ? "24小时分布" : "一周分布"
+  }
+))
+```
+```js
+const missionData = distributionMode === "hourly" 
+  ? dataDis.data.hourly_distribution 
+  : dataDis.data.weekday_distribution;
+```
+```js
+missionDisPlot(missionData, distributionMode)
+```
+# 2本月每小时平均响应时间(disptime-enrtime)
+```js
+import {hourlyResTime} from './components/dashboard-kpi/hourlyResTime.js'
+```
+
+```js
+hourlyResTime(dataDis.data.response_time)
+```
+
+# 3各基地工作负载
+Did LFOM transport patient 为yes 的时候，统计airUnit和groundUnit的数量
+
+```js
+const resBaseCount = await fetch('http://localhost:5001/api/get_mission_count_for_each_base')
+const dataBase = await resBaseCount.json()
+```
+
+```js
+dataBase
+```
+
+```js
+import {baseWorkloadPlot} from './components/dashboard-kpi/baseWorkloadPlot.js'
+```
+
+```js
+baseWorkloadPlot(dataBase.data)
+```
+
+
+
+# 4 transportByPrimaryQ
+分析transportByPrimaryQ字段。：最合适的资产（飞机/车辆）是否无延迟地运输了病人
+- appropriateAsset (Who should have gone if available) 应该去的
+- respondingAssets 响应的
+----- 下面的部分要修改
 ```js
 let resTest=null
 let data = null
@@ -56,6 +124,7 @@ data = await resTest.json()
 ```js
 import {delayPlot} from './components/dashboard-kpi/delayRatePlot.js'
 import {delayReasonPlot} from './components/dashboard-kpi/delayReasonPlot.js'
+import {expectedCompletionPlot} from './components/dashboard-kpi/expectedCompletionPlot.js'
 ```
 
 
@@ -67,6 +136,24 @@ ${delayPlot(data.delayData)}
 ${delayReasonPlot(data.delayReasonData)}
 </div>
 
+</div>
+
+# 5 各基地按预期完成比例
+展示每个基地预期要出任务的数量，以及按照预期完成的比例
+
+<div class='card'>
+${expectedCompletionPlot(data.expectedCompletionData)}
+</div>
+
+# 6 各基地没有响应的原因分析
+展示LF1-LF4各基地没有响应的原因占比
+
+```js
+import {noResponseReasonPlot} from './components/dashboard-kpi/noResponseReasonPlot.js'
+```
+
+<div class='card'>
+${noResponseReasonPlot(data.noResponseReasonsData)}
 </div>
 
 <!-- map -->

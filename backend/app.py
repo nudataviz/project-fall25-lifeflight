@@ -75,16 +75,16 @@ def get_heatmap():
 @app.route('/api/indicators', methods=['GET'])
 def get_indicators():
     """Get indicator data"""
-    df = read_data()
+    df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'data', '4_kpi_dashboard', 'merge_oasis_master_202408.csv'))
     # 1 total missions
     total_missions = df['yearwithrc'].nunique()
     total_missions_formatted = f"{total_missions:,}" 
     # 2 Total Cities Covered
     total_cities_covered = df['PU City'].nunique()
     # 3 Monthly Average Response Time
-    mart_str = calculate_response_time(df,2023,12)
+    mart_str = calculate_response_time(df,2024,8)
     # 4 Yearly Average Response Time
-    yart_str = calculate_response_time(df,2023)
+    yart_str = calculate_response_time(df,2024)
     
     def extract_minutes_seconds(timedelta_str):
         if timedelta_str == "N/A":
@@ -112,7 +112,96 @@ def get_indicators():
         }
     })
 
+# ======== dashboard page distribution =========
+@app.route('/api/get_24hour_distribution', methods=['GET'])
+def get_24hour_distribution():
+    """Get 24 hour distribution data"""
+    df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'data', '4_kpi_dashboard', 'merge_oasis_master_202408.csv'))
+    
+    df['disptime_dt'] = pd.to_datetime(df['disptime'], errors='coerce', format='%m/%d/%Y %H:%M:%S')
+    df['Hour'] = df['disptime_dt'].dt.hour
+    df['Weekday'] = df['disptime_dt'].dt.dayofweek  # 0=Monday, 6=Sunday
+    df['Date'] = df['disptime_dt'].dt.date  # 提取日期用于计算每天平均
+    
+    df['response_time_seconds'] = get_time_diff_seconds(df, 'disptime', 'enrtime')
+    df['response_time'] = df['response_time_seconds'] / 60.0 
+    
+    df = df[
+        (df['Hour'].notna()) & 
+        (df['response_time'].notna()) &
+        (df['response_time'] >= 0) &
+        (df['response_time'] < 500) 
+    ].copy()
+    
+    # 24小时任务量分布（按小时）
+    count_df = df.groupby('Hour').size().reset_index(name='count')
+    
+    # 一周任务量分布（按星期几，计算每天平均任务数）
+    # 首先计算每个星期几的总任务数和出现的天数
+    weekday_stats = df.groupby('Weekday').agg({
+        'Date': 'nunique',  # 该星期几出现的不同日期数
+        'disptime_dt': 'count'  # 该星期几的总任务数
+    }).reset_index()
+    weekday_stats.columns = ['Weekday', 'day_count', 'total_count']
+    weekday_stats['count'] = (weekday_stats['total_count'] / weekday_stats['day_count']).round(2)  # 每天平均任务数
+    
+    # 星期几名称映射（0=Monday, 6=Sunday）
+    weekday_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    weekday_stats['WeekdayName'] = weekday_stats['Weekday'].apply(lambda x: weekday_names[int(x)])
+    
+    # 确保所有7天都在结果中
+    all_weekdays = pd.DataFrame({
+        'Weekday': range(7),
+        'WeekdayName': weekday_names
+    })
+    weekday_df = all_weekdays.merge(weekday_stats[['Weekday', 'count']], on='Weekday', how='left').fillna(0)
+    
+    # 计算响应时间的统计信息：平均值、标准差
+    response_time_stats = df.groupby('Hour')['response_time'].agg([
+        ('mean', 'mean'),
+        ('std', 'std')
+    ]).reset_index()
+    
+    all_hours = pd.DataFrame({'Hour': range(24)})
+    count_df = all_hours.merge(count_df, on='Hour', how='left').fillna(0)
+    response_time_df = all_hours.merge(response_time_stats, on='Hour', how='left').fillna(0)
+    
+    # 计算上下限：mean ± std
+    response_time_df['response_time'] = response_time_df['mean'].round(2)
+    response_time_df['std'] = response_time_df['std'].fillna(0).round(2)
+    response_time_df['upper'] = (response_time_df['mean'] + response_time_df['std']).round(2)
+    response_time_df['lower'] = (response_time_df['mean'] - response_time_df['std']).round(2)
+    # 确保下限不为负数
+    response_time_df['lower'] = response_time_df['lower'].clip(lower=0)
+    
+    # 转换数据类型
+    count_df['Hour'] = count_df['Hour'].astype(int)
+    count_df['count'] = count_df['count'].astype(int)
+    weekday_df['Weekday'] = weekday_df['Weekday'].astype(int)
+    weekday_df['count'] = weekday_df['count'].round(2)
+    response_time_df['Hour'] = response_time_df['Hour'].astype(int)
+    
+    return jsonify({  
+        'status': 'success',
+        'data': {
+            'hourly_distribution': count_df[['Hour', 'count']].to_dict(orient='records'),
+            'weekday_distribution': weekday_df[['Weekday', 'WeekdayName', 'count']].to_dict(orient='records'),
+            'response_time': response_time_df[['Hour', 'response_time', 'upper', 'lower', 'std']].to_dict(orient='records')
+        }
+    })
 
+# ======== dashboard page mission count for each base =========
+@app.route('/api/get_mission_count_for_each_base', methods=['GET'])
+def get_mission_count_for_each_base():
+    """Get mission count for each base"""
+    df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'data', '4_kpi_dashboard', 'merge_oasis_master_202408.csv'))
+    df = df[df['lfomTransport (Did LFOM transport patient)'] == 'yes']
+    df['base'] = df['airUnit'].fillna(df['groundUnit'])
+    base_counts = df['base'].value_counts().sort_values(ascending=False)
+    return jsonify({
+        'status': 'success',
+        'data': base_counts.to_dict()
+    })
 # ======== demand forecasting page =========
 @app.route('/api/predict_demand_v2', methods=['POST'])
 def predict_demand_v2():
@@ -1156,36 +1245,143 @@ def get_safety_spc_api():
 @app.route('/api/test', methods=['GET'])
 def get_test_api():
     try:
-        df = read_data('Oasis.csv')
+        df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'data', '4_kpi_dashboard', 'merge_oasis_master_202408.csv'))
         print(df['Add Date'].head())
         df['Add Date'] = pd.to_datetime(df['Add Date'])
         df['Year'] = df['Add Date'].dt.year
         df['Month'] = df['Add Date'].dt.month
+        # rename
         df.rename(columns={'responseDelay (Subjective and with no objective time for them to decide, none or select reason, just gustalt)':'responseDelay'},inplace=True)
         df.rename(columns={'transportByPrimaryQ (Did the appropriate asset transport the patient without delay)':'transportByPrimaryQ'},inplace=True)
-        df = df[df['Year'] == 2024]
+        df.rename(columns={'appropriateAsset (Who should have gone if available)':'appropriateAsset'},inplace=True)
+        df.rename(columns={'reasonL1NoResponse (L1 is Bangor RotorWing, L2 is Lewiston RW, L3 is Bangor FixedWing, L4 is Sanford RW) ':'reasonL1NoResponse'},inplace=True)
+        
+        # 创建 base 字段（实际出任务的基地）
+        df['base'] = df['airUnit'].fillna(df['groundUnit'])
+        
         df['responseDelay'] = df['responseDelay'].fillna('')
         df['delay_list'] = df['responseDelay'].str.split('|')
         
+        # 处理 respondingAssets，将用 | 分隔的值拆分成列表
+        # df['respondingAssets'] = df['respondingAssets'].fillna('')
+        df['respondingAssets_list'] = df['airUnit'].fillna(df['groundUnit'])
+        
         df = df.replace({np.nan: None, pd.NA: None, pd.NaT: None})
-        df = df[df['respondingAssets'].isin(['l1','l2','l3','l4'])]
-        df_exp = df.explode('delay_list')
-        df_exp = df_exp[(df_exp['delay_list'] != '')&(df_exp['delay_list']!='noDelays')]
-        reason_counts = (
+
+        # 先展开 respondingAssets_list
+        df_exp = df.explode('respondingAssets_list')
+        # 再展开 delay_list
+        df_exp = df_exp.explode('delay_list')
+        # df_exp = df_exp[(df_exp['delay_list'] != '')&(df_exp['delay_list']!='noDelays')]
+        delay_reason_counts = (
             df_exp['delay_list']
             .value_counts()
             .reset_index()
         )
-        reason_counts.columns = ['reason', 'count']
-        print(reason_counts.head())
-        df_delay_reason = df_exp.groupby(['delay_list','respondingAssets']).size().reset_index(name='count')
-        delayData = df_exp.groupby(['respondingAssets','transportByPrimaryQ']).size().reset_index(name='count')
-        print(delayData['count'].describe())
+        delay_reason_counts.columns = ['reason', 'count']
+        print(delay_reason_counts.head())
+        df_delay_reason = df_exp.groupby(['delay_list','respondingAssets_list']).size().reset_index(name='count')
+        delayData = df_exp.groupby(['respondingAssets_list','transportByPrimaryQ']).size().reset_index(name='count')
+        # 重命名字段以匹配前端期望
+        delayData.rename(columns={'respondingAssets_list': 'respondingAssets'}, inplace=True)
+        df_delay_reason.rename(columns={'respondingAssets_list': 'respondingAssets'}, inplace=True)
+
+
+        # 统计每个基地为appropriateAsset但是最终不为base的数量（没有如期完成的数量）
+        df_base_count = df.groupby(['appropriateAsset','base']).size().reset_index(name='count')
+        df_base_count = df_base_count[df_base_count['appropriateAsset'] != df_base_count['base']]
+        
+        # 计算每个基地的预期任务总数（按 appropriateAsset 分组）
+        df_expected_total = df.groupby(['appropriateAsset']).size().reset_index(name='total_count')
+        
+        # 计算每个基地按预期完成的数量（appropriateAsset == base）
+        df_completed_as_expected = df[df['appropriateAsset'] == df['base']].groupby(['appropriateAsset']).size().reset_index(name='completed_count')
+        
+        # 合并数据
+        df_expected_stats = df_expected_total.merge(
+            df_completed_as_expected, 
+            on='appropriateAsset', 
+            how='left'
+        ).fillna(0)
+        
+        # 确保 completed_count 是整数
+        df_expected_stats['completed_count'] = df_expected_stats['completed_count'].astype(int)
+        df_expected_stats['total_count'] = df_expected_stats['total_count'].astype(int)
+        
+        print("Expected stats:")
+        print(df_expected_stats.head())
+        
+        # 统计各基地没有响应的原因
+        no_response_fields = ['reasonL1NoResponse', 'reasonL2NoResponse', 'reasonL3NoResponse', 'reasonL4NoResponse2']
+        base_no_response_reasons = {}
+        
+        # 字段到基地名称的映射
+        field_to_base = {
+            'reasonL1NoResponse': 'LF1',
+            'reasonL2NoResponse': 'LF2',
+            'reasonL3NoResponse': 'LF3',
+            'reasonL4NoResponse2': 'LF4'
+        }
+        
+        for field in no_response_fields:
+            # 检查字段是否存在
+            if field not in df.columns:
+                print(f"Warning: Field {field} not found in dataframe")
+                continue
+                
+            # 获取基地名称
+            base_name = field_to_base.get(field, 'Unknown')
+            
+            # 填充空值
+            df[field] = df[field].fillna('')
+            
+            # 拆分用 | 分隔的原因
+            df_field_expanded = df[df[field] != ''].copy()
+            
+            if len(df_field_expanded) == 0:
+                print(f"No data for {field}")
+                continue
+                
+            df_field_expanded['reason_list'] = df_field_expanded[field].str.split('|')
+            df_field_expanded = df_field_expanded.explode('reason_list')
+            
+            # 去除原因前面的基地编号（如 1tasked -> tasked, 2oosMedic -> oosMedic）
+            df_field_expanded['reason_clean'] = df_field_expanded['reason_list'].str.replace(r'^[1-4]', '', regex=True)
+            df_field_expanded['reason_clean'] = df_field_expanded['reason_clean'].str.strip()
+            
+            # 过滤空值
+            df_field_expanded = df_field_expanded[df_field_expanded['reason_clean'] != '']
+            
+            if len(df_field_expanded) == 0:
+                continue
+            
+            # 统计原因数量
+            reason_counts = df_field_expanded['reason_clean'].value_counts().reset_index()
+            reason_counts.columns = ['reason', 'count']
+            reason_counts['base'] = base_name
+            
+            if base_name not in base_no_response_reasons:
+                base_no_response_reasons[base_name] = []
+            base_no_response_reasons[base_name] = reason_counts.to_dict(orient='records')
+        
+        # 转换为列表格式便于前端处理
+        no_response_data = []
+        for base, reasons in base_no_response_reasons.items():
+            no_response_data.extend(reasons)
+        
+        print("No response reasons stats:")
+        if len(no_response_data) > 0:
+            print(pd.DataFrame(no_response_data).head(20))
+        else:
+            print("No response reasons data found")
+        
         return jsonify({
             'status': 'success',
             'data': df.to_dict(orient='records'),
             'delayData':delayData.to_dict(orient='records'),
-            'delayReasonData':reason_counts.to_dict(orient='records')
+            'delayReasonData':delay_reason_counts.to_dict(orient='records'),
+            'expectedCompletionData': df_expected_stats.to_dict(orient='records'),
+            'noResponseReasonsData': no_response_data
         })
     except Exception as e:
         return jsonify({

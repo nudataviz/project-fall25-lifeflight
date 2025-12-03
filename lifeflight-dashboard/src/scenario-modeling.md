@@ -216,7 +216,7 @@ const expectedTimeValue = Generators.input(expectedTime)
 
 这里也需要计算时间，所以要用master数据集
 
-## General Base Evaluation 
+## General Base Evaluation （airUnit）
 ```js
 let rangeMapHtml = null
 let rangeMapError = null
@@ -320,7 +320,7 @@ if(rangeMapError){
 }
 ```
 
-## Special Base Evaluation
+## Special Base Evaluation（groundUnit）
 
 Special Base: B-CCT, L-CCT, S-CCT, neoGround
 

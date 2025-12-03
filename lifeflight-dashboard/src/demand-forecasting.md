@@ -75,9 +75,19 @@ const intervalWidth = view(Inputs.range([0.5, 0.99], {
 </div>
 </div>
 
+```js
+const corrResponse = await fetch('http://localhost:5001/api/get_corr_matrix')
+const corrData = await corrResponse.json()
+```
+
+```js
+import {correlationPlot} from './components/demand-forecasting/correlationPlot.js'
+```
+
 <div class='card'>
 <h4>Extra variables parameters<h4/>
-<div>
+<div style='display: flex; align-items:center; gap: 20px;'>
+<div style='flex: 1; min-width: 300px;'>
 
 ```js
 const availableRegressors = [
@@ -116,7 +126,12 @@ const regressorPriorScale = view(Inputs.range([0.001, 0.5], {
 }))
 ```
 </div>
+<div style='flex: 2; min-width: 0; display: flex; align-items: right; justify-content: center;'>
+${correlationPlot(corrData.data.count_correlations)}
 </div>
+</div>
+</div>
+
 
 
 
