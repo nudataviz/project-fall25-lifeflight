@@ -1,8 +1,9 @@
 import pandas as pd
 import os
 from pathlib import Path
+from typing import Dict, Any
 
-from utils.heatmap import generate_city_demand_heatmap, map_to_html
+from utils.heatmap import generate_city_demand_heatmap, map_to_html, process_city_demand, get_city_coordinates
 
 
 def load_dataset(dataset: str) -> pd.DataFrame:
@@ -41,6 +42,44 @@ def filter_by_base(df: pd.DataFrame, base_places: str, dataset: str) -> pd.DataF
             df = df[df['TASC Primary Asset '].isin(base_list)]
     
     return df
+
+
+def get_heatmap_by_base_data(dataset: str, base_places: str) -> Dict[str, Any]:
+    """
+    Get heatmap data for frontend rendering
+    
+    Args:
+    dataset: dataset name
+    base_places: base places list, comma separated or 'ALL'
+    
+    Returns:
+    Dict with heatmap_data
+    """
+    # Load data
+    df = load_dataset(dataset)
+    
+    # Filter data
+    df = filter_by_base(df, base_places, dataset)
+    
+    # Get city coordinates
+    city_coords = get_city_coordinates(isOnlyMaine=True)
+    
+    # Process city demand for heatmap
+    city_demand = process_city_demand(df, city_coords, isOnlyMaine=True)
+    
+    # Convert city_demand to list of dicts for JSON serialization
+    heatmap_data = []
+    if len(city_demand) > 0:
+        heatmap_data = city_demand[['latitude', 'longitude', 'task_count']].to_dict(orient='records')
+        # Replace NaN with None for JSON serialization
+        for record in heatmap_data:
+            for key, value in record.items():
+                if pd.isna(value):
+                    record[key] = None
+    
+    return {
+        'heatmap_data': heatmap_data
+    }
 
 
 def generate_heatmap_by_base(dataset: str, base_places: str) -> str:

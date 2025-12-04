@@ -124,8 +124,12 @@ const cityTextareaValue = Generators.input(cityTextarea)
 ```
 
 ```js
+import {rangeMap} from './components/scenario-modeling/rangeMap.js'
+```
+
+```js
 // 获取special base统计信息
-let specialBaseMapHtml = null
+let specialBaseMapData = null
 let specialBaseStats = null
 let specialBaseError = null
 
@@ -145,13 +149,16 @@ if(selectedCenterType){
     if(!specialBaseResponse.ok){
       throw new Error(`HTTP ${specialBaseResponse.status}: ${specialBaseResponse.statusText}`)
     }
-    const specialBaseData = await specialBaseResponse.json()
-    specialBaseMapHtml = specialBaseData.map_html
-    specialBaseStats = specialBaseData.statistics
+    const responseData = await specialBaseResponse.json()
+    specialBaseMapData = {
+      heatmapData: responseData.heatmap_data || [],
+      baseLocations: responseData.base_locations || []
+    }
+    specialBaseStats = responseData.statistics
     specialBaseError = null
   }catch(e){
     specialBaseError = e.message
-    specialBaseMapHtml = null
+    specialBaseMapData = null
     specialBaseStats = null
     console.error('Special base fetch error:', e)
   }
@@ -215,7 +222,7 @@ if(specialBaseError){
     <h3>Error loading Ground Unit map</h3>
     <p>${specialBaseError}</p>
   </div>`)
-} else if(specialBaseMapHtml){
+} else if(specialBaseMapData){
   display(html`
     <div class="card" style="overflow: hidden;">
       <h2>Ground Unit Range Map - ${selectedCenterType}</h2>
@@ -223,11 +230,7 @@ if(specialBaseError){
         Service coverage with ${specialBaseRadiusValue} mile radius
         ${cityTextareaValue && cityTextareaValue.trim() ? `(Base Cities: ${cityTextareaValue})` : ''}
       </h3>
-      <iframe 
-        srcdoc=${specialBaseMapHtml}
-        style="width: 100%; height: 500px; border: none;"
-        title="Ground Unit Range Map"
-      ></iframe>
+      ${rangeMap(specialBaseMapData.heatmapData, specialBaseMapData.baseLocations, specialBaseRadiusValue)}
     </div>
   `)
 } else if(!selectedCenterType){

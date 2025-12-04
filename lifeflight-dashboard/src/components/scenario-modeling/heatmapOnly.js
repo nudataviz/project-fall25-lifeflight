@@ -1,6 +1,6 @@
 import {html} from "npm:htl";
 
-export function rangeMap(heatmapData, baseLocations, radiusMiles) {
+export function heatmapOnly(heatmapData) {
   // 处理热力图数据点
   const heatmapPoints = heatmapData
     .map(d => {
@@ -11,17 +11,12 @@ export function rangeMap(heatmapData, baseLocations, radiusMiles) {
     })
     .filter(p => p !== null);
   
-  // 处理基地位置
-  const basesJson = JSON.stringify(baseLocations);
   const heatmapPointsJson = JSON.stringify(heatmapPoints);
   
   // 计算地图中心
   let centerLat = 44.5;
   let centerLon = -69.0;
-  if (baseLocations.length > 0) {
-    centerLat = baseLocations.reduce((sum, b) => sum + b.latitude, 0) / baseLocations.length;
-    centerLon = baseLocations.reduce((sum, b) => sum + b.longitude, 0) / baseLocations.length;
-  } else if (heatmapPoints.length > 0) {
+  if (heatmapPoints.length > 0) {
     centerLat = heatmapPoints.reduce((sum, p) => sum + p[0], 0) / heatmapPoints.length;
     centerLon = heatmapPoints.reduce((sum, p) => sum + p[1], 0) / heatmapPoints.length;
   }
@@ -59,36 +54,6 @@ export function rangeMap(heatmapData, baseLocations, radiusMiles) {
             minOpacity: 0.3
           }).addTo(map);
         }
-        
-        // 添加基地标记和服务半径圆圈
-        const bases = ${basesJson};
-        const radiusMiles = ${radiusMiles};
-        const radiusMeters = radiusMiles * 1609.34; // 转换为米
-        
-        bases.forEach(base => {
-          // 添加基地标记
-          L.marker([base.latitude, base.longitude], {
-            icon: L.divIcon({
-              className: 'base-marker',
-              html: '<div style="background-color: red; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
-              iconSize: [20, 20],
-              iconAnchor: [10, 10]
-            })
-          })
-          .bindPopup('<b>' + base.name + '</b><br>Service Radius: ' + radiusMiles + ' miles')
-          .addTo(map);
-          
-          // 添加服务半径圆圈
-          L.circle([base.latitude, base.longitude], {
-            radius: radiusMeters,
-            color: 'blue',
-            fillColor: 'blue',
-            fillOpacity: 0.1,
-            weight: 2
-          })
-          .bindPopup(base.name + ' - ' + radiusMiles + ' mile radius')
-          .addTo(map);
-        });
       </script>
     </body>
     </html>
@@ -97,7 +62,7 @@ export function rangeMap(heatmapData, baseLocations, radiusMiles) {
   return html`<iframe 
     srcdoc=${mapHtml}
     style="width: 100%; height: 500px; border: none;"
-    title="Range Map"
+    title="Heatmap"
   ></iframe>`;
 }
 

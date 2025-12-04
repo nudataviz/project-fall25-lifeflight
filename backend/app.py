@@ -462,17 +462,20 @@ def get_seasonality_heatmap_api():
 # ======== scenario modeling page - heatmap by base locations =========
 @app.route('/api/heatmap_by_base', methods=['GET'])
 def get_heatmap_by_base():
-    """Get heatmap by base locations"""
+    """Get heatmap data by base locations"""
     try:
         dataset = request.args.get('dataset', 'Roux(2012-2023)')
         base_places = request.args.get('base_places', 'ALL')
-        from utils.scenario.get_heatmap import generate_heatmap_by_base
+        from utils.scenario.get_heatmap import get_heatmap_by_base_data
         
-        # Generate heatmap HTML
-        html_map = generate_heatmap_by_base(dataset, base_places)
+        # Get heatmap data
+        map_data = get_heatmap_by_base_data(dataset, base_places)
         
-        # Return HTML
-        return html_map
+        # Return JSON with heatmap data
+        return jsonify({
+            'status': 'success',
+            'heatmap_data': map_data['heatmap_data']
+        })
         
     except Exception as e:
         return jsonify({
@@ -1014,7 +1017,7 @@ def get_special_base_statistics():
             calculate_special_base_statistics,
             get_special_base_data
         )
-        from utils.scenario.get_range_map import generate_range_map
+        from utils.scenario.get_range_map import get_range_map_data
         from utils.heatmap import get_city_coordinates
         from utils.getData import read_data
         
@@ -1044,15 +1047,15 @@ def get_special_base_statistics():
             base_cities_list  # Pass list of cities
         )
         
-        # Generate map with all base cities
+        # Get map data (heatmap data and base locations) instead of HTML
+        map_data = None
         if base_cities_list:
-            html_map = generate_range_map(base_cities_list, radius, expected_time,center_type)
-        else:
-            html_map = None
+            map_data = get_range_map_data(base_cities_list, radius, expected_time, center_type)
         
         return jsonify({
             'status': 'success',
-            'map_html': html_map,
+            'heatmap_data': map_data['heatmap_data'] if map_data else [],
+            'base_locations': map_data['base_locations'] if map_data else [],
             'statistics': stats
         })
         

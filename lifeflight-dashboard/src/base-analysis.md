@@ -119,7 +119,11 @@ if(dateSetFile=='Roux(2012-2023)'){
 ```
 
 ```js
-let mapHtml = null
+import {heatmapOnly} from './components/scenario-modeling/heatmapOnly.js'
+```
+
+```js
+let mapData = null
 let mapError = null
 
 if(selectPlaceValue && selectPlaceValue.length > 0){
@@ -137,30 +141,38 @@ if(selectPlaceValue && selectPlaceValue.length > 0){
     if(!mapResponse.ok){
       throw new Error(`HTTP ${mapResponse.status}: ${mapResponse.statusText}`)
     }
-    mapHtml = await mapResponse.text()
+    const responseData = await mapResponse.json()
+    mapData = responseData.heatmap_data || []
     mapError = null
   }catch(e){
     mapError = e.message
-    mapHtml = null
+    mapData = null
     console.error('Map fetch error:', e)
   }
 }
 ```
 
 ```js
-html`
+if(mapError){
+  display(html`<div class="card" style="padding: 20px; color: red;">
+    <h3>Error loading heatmap</h3>
+    <p>${mapError}</p>
+  </div>`)
+} else if(mapData && mapData.length > 0){
+  display(html`
     <div class="card" style="overflow: hidden;">
       <h2>Vehicle Base Heatmap</h2>
       <h3 style="color: #666;">
         Heatmap of missions by selected base locations (${dateSetFile})
       </h3>
-      <iframe 
-        srcdoc=${mapHtml}
-        style="width: 100%; height: 500px; border: none;"
-        title="Base Heatmap"
-      ></iframe>
+      ${heatmapOnly(mapData)}
     </div>
-  `
+  `)
+} else if(selectPlaceValue && selectPlaceValue.length > 0){
+  display(html`<div class="card" style="padding: 20px; color: #666;">
+    <p>No data available for selected base locations.</p>
+  </div>`)
+}
 ```
 
 ## 从基地出发-接到病人时间分析
