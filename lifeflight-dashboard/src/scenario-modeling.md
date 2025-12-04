@@ -36,7 +36,7 @@ const expectedTime = Inputs.range([10,50],{label: "Expected Dispatch-to-Patient 
 ${existBase}
 ${optionalBase}
 ${serviceRadius}
-${expectedTime}
+<!-- ${expectedTime} -->
 ```
 
 
@@ -66,7 +66,7 @@ if(existBaseValue && existBaseValue.length > 0){
       params.append('baseValue', base)
     })
     params.append('radius', serviceRadiusValue)
-    params.append('expectedTime', expectedTimeValue)
+    params.append('expectedTime', expectedTimeValue||20)
     
     const rangeMapResponse = await fetch(`http://localhost:5001/api/get_range_map?${params}`)
     if(!rangeMapResponse.ok){
@@ -89,7 +89,6 @@ if(existBaseValue && existBaseValue.length > 0){
 ```
 
 ```js
-// 显示地图
 if(rangeMapError){
   display(html`<div class="card" style="padding: 20px; color: red;">
     <h3>Error loading range map</h3>
@@ -112,7 +111,7 @@ if(rangeMapError){
 }
 ```
 
-## Coverage Statistics
+<!-- ## Coverage Statistics
 ```js
 if(rangeMapStats){
   display(html`<div style="margin-top: 20px;">
@@ -150,6 +149,6 @@ if(rangeMapStats){
     </div>
   </div>`)
 }
-```
+``` -->
 
 

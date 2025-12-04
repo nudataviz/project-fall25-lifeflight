@@ -9,15 +9,16 @@ title: "Service Coverage: Ground Units"
 </div>
 
 # 2.3 Service Coverage: Ground Units
-数据说明：
-- 涉及时间计算，所以用master数据集（2021.8-2024.8）
+<div class="note" label="Data Notes">
 
-地面救援里距离对时间的影响更大。我们发现数据集中，Ground Unit负责的任务都集中在Unit周围，当任务距离较远的时候，接到病人的时间会明显增加（尤其是对于neoGround)，所以Ground Unit的位置比air Unit更加重要，单独拿出来分析。
-Ground Unit: B-CCT, L-CCT, S-CCT, neoGround
+- This analysis uses the *FlightTransportsMaster.csv(2021-2024)* as it involves time-based calculations.
+- Ground Units included: B-CCT, L-CCT, S-CCT, neoGround.
+- Ground units’ missions are highly concentrated near their bases. Longer missions, especially for neoGround, result in significantly increased response times. This makes the base location of Ground Units more critical than Air Units, warranting a separate analysis.
+</div>
 
-## 每个基地前往病人所在地的速度
+## Speed Analysis
 
-统计每个基地前往病人所在地的速度，用速度的中位数作为每种基地的出任务速度的估计。
+Median speed is calculated for each base to estimate the typical mission speed from base to patient location.
 ```js
 const speedsResponse = await fetch('http://localhost:5001/api/get_special_base_speeds')
 const speedsData = await speedsResponse.json()
@@ -41,9 +42,9 @@ if(Object.keys(baseSpeeds).length > 0){
 ```
 
 ## Select Ground Unit Type
-选择你想分析的Ground Unit 类型
-```js
+Choose the Ground Unit type to analyze.
 
+```js
 const centerType = Inputs.radio(['neoGround', 'L-CCT', 'B-CCT', 'S-CCT'], {
   label: "Select Center Type",
   value: 'neoGround'
@@ -92,7 +93,7 @@ if(selectedCenterType){
     const tempResponse = await fetch(`http://localhost:5001/api/get_special_base_statistics?${tempParams}`)
     if(tempResponse.ok){
       const tempData = await tempResponse.json()
-      // 从coverage_stats中获取初始base城市
+     // get base city
       const coverageStats = tempData.statistics?.coverage_stats || {}
       initialBaseCity = Object.keys(coverageStats)[0] || null
     }
@@ -128,7 +129,6 @@ import {rangeMap} from './components/scenario-modeling/rangeMap.js'
 ```
 
 ```js
-// 获取special base统计信息
 let specialBaseMapData = null
 let specialBaseStats = null
 let specialBaseError = null
@@ -165,16 +165,29 @@ if(selectedCenterType){
 }
 ```
 ## Ground Unit Statistics - ${selectedCenterType}
-
-计算说明：
-- 使用对每种Unit估算的Speed作为speed，城市和城市的坐标计算出的距离作为距离，来计算服务半径内的任务从基地出发到达用户的时间。
-- 每当加入一个新的基地，会重新计算新基地覆盖范围内的到达时间。
-- 如果两个基地的覆盖范围有重合，会取时间小的。
-
-
-指标说明：
-
-- 统计出所选base在服务范围下cover的城市数量，Compliance Statistics对比了范围内的任务数量和响应时间达标的任务数量。
+```js
+if(specialBaseError){
+  display(html`<div class="card" style="padding: 20px; color: red;">
+    <h3>Error loading Ground Unit map</h3>
+    <p>${specialBaseError}</p>
+  </div>`)
+} else if(specialBaseMapData){
+  display(html`
+    <div class="card" style="overflow: hidden;">
+      <h2>Ground Unit Range Map - ${selectedCenterType}</h2>
+      <h3 style="color: #666;">
+        Service coverage with ${specialBaseRadiusValue} mile radius
+        ${cityTextareaValue && cityTextareaValue.trim() ? `(Base Cities: ${cityTextareaValue})` : ''}
+      </h3>
+      ${rangeMap(specialBaseMapData.heatmapData, specialBaseMapData.baseLocations, specialBaseRadiusValue)}
+    </div>
+  `)
+} else if(!selectedCenterType){
+  display(html`<div class="card" style="padding: 20px; color: #666;">
+    <p>Please select a center type to view the map.</p>
+  </div>`)
+}
+```
 
 
 ```js
@@ -215,29 +228,21 @@ if(specialBaseStats){
   </div>`)
 }
 ```
+<div class='grid grid-cols-2'>
+<div class="note" label="Calculation Notes">
 
-```js
-if(specialBaseError){
-  display(html`<div class="card" style="padding: 20px; color: red;">
-    <h3>Error loading Ground Unit map</h3>
-    <p>${specialBaseError}</p>
-  </div>`)
-} else if(specialBaseMapData){
-  display(html`
-    <div class="card" style="overflow: hidden;">
-      <h2>Ground Unit Range Map - ${selectedCenterType}</h2>
-      <h3 style="color: #666;">
-        Service coverage with ${specialBaseRadiusValue} mile radius
-        ${cityTextareaValue && cityTextareaValue.trim() ? `(Base Cities: ${cityTextareaValue})` : ''}
-      </h3>
-      ${rangeMap(specialBaseMapData.heatmapData, specialBaseMapData.baseLocations, specialBaseRadiusValue)}
-    </div>
-  `)
-} else if(!selectedCenterType){
-  display(html`<div class="card" style="padding: 20px; color: #666;">
-    <p>Please select a center type to view the map.</p>
-  </div>`)
-}
-```
+- Speed for each unit is estimated using the median speed of its past missions.
+- Distance between cities is calculated from city coordinates.
+- Service time for each mission is computed as distance ÷ speed.
+- Adding a new base recalculates service coverage and arrival times.
+- If coverage areas overlap, the shorter arrival time is used.
+</div>
+
+<div class="note" label="Metrics">
+
+- Cities Covered: Number of cities within the unit’s service range.
+- Compliance Statistics: Compares the total number of missions in coverage with the number of missions meeting response-time standards.
+</div>
+<div>
 
 
