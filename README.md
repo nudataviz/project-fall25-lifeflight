@@ -20,7 +20,11 @@ An interactive data visualization dashboard for analyzing medical transport serv
 
 ### Start the backend
 ```
-python backend/app.py
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python app.py
 ```
 The backend API will be available at: `http://localhost:5001/`
 
@@ -36,4 +40,6 @@ The frontend will be available at: `http://127.0.0.1:3000/ `
 
 - **Maine Population Projections**:：https://www.maine.gov/dafs/economist/demographic-projections
 - **Historical Population Data**：https://www.census.gov/data/developers/data-sets/acs-1year.html
+- **Total Population for Maine Counties (2010-2019)**: https://www.census.gov/data/tables/time-series/demo/popest/2010s-counties-total.html
+- **Maine Weather History**: https://www.wunderground.com/history/daily/US/ME/4210/date/2024-9-20
 

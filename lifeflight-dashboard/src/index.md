@@ -155,20 +155,18 @@ ${delayReasonPlot(data.delayReasonData)}
 - respondingAssets：但不是每个基地都能去的，这个字段是最终执行任务的基地。
 - Expected Completion Rate by Base (2024)就展示了，按预期基地完成任务的比例
 
-展示每个基地预期要出任务的数量，以及按照预期完成的比例
-
-<div class='card'>
-${expectedCompletionPlot(data.expectedCompletionData)}
-</div>
-
-展示LF1-LF4各基地没有响应的原因占比
-
+展示每个基地预期要出任务的数量，以及按照预期完成的比例；展示LF1-LF4各基地没有响应的原因占比。
 ```js
 import {noResponseReasonPlot} from './components/dashboard-kpi/noResponseReasonPlot.js'
 ```
 
+<div style='display: flex;align-items: center;'>
+<div class='card'>
+${expectedCompletionPlot(data.expectedCompletionData)}
+</div>
 <div class='card'>
 ${noResponseReasonPlot(data.noResponseReasonsData)}
+</div>
 </div>
 
 # 热力图

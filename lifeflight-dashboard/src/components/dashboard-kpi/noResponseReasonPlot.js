@@ -16,7 +16,7 @@ export function noResponseReasonPlot(data) {
     return Plot.plot({
       title: "No Response Reasons by Base (2024)",
       width: 400,
-      height: 200,
+      height: 400,
       marginLeft: 200,
       marginRight: 20,
       marks: [
@@ -88,7 +88,7 @@ export function noResponseReasonPlot(data) {
   return Plot.plot({
     title: "No Response Reasons by Base (2024)",
     width: calculatedWidth,
-    height: Math.max(400, allReasons.length * 25),
+    height: 400,
     marginLeft: 200,
     marginTop: 40,
     marginBottom: 40,
