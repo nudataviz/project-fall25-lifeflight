@@ -16,7 +16,7 @@ export default {
       ]
     },
     {
-      name: "What-If: Coverage Optimization",
+      name: "What-If Scenarios: Coverage Optimization",
       pages: [
         {name: "Base analysis", path: "/base-analysis"},
         {name: "All Units Coverage", path: "/scenario-modeling"},

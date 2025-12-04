@@ -1,5 +1,5 @@
 ---
-title: Existing Base Analysis
+title: Current Base Analysis
 ---
 <div class="breadcrumb" style="margin-bottom: 2rem; color: #666; font-size: 0.9rem;">
   <a href="/">Home</a> › 
@@ -7,17 +7,26 @@ title: Existing Base Analysis
   <span style="color: #333; font-weight: 500;">2.1 Existing Base Analysis</span>
 </div>
 
-# 2.1 Existing Base Analysis
-在这一节中，我们专注于分析Maine州的任务
+# 2.1 Current Base Analysis
+In this section, we analyze the current base coverage and compare the average Travel Time to Scene before and after the changes.
+
+Only missions that occurred in the state of Maine are included (based on tasks where the pickup city is located in Maine).
+
 <br/>
 
 
-
 ## Vehicle Mileage Statistics
-roux数据集中（2012.07-2023.12），每个航空基地任务的历程统计。
-这里L1 is Bangor RotorWing, L2 is Lewiston RW, L3 is Bangor FixedWing, L4 is Sanford RW
+We use the ‘Roux Full Dispatch Data–redacted–v2’ dataset (2012.07–2023.12).
+Each record belongs to one of four air bases:
+- L1: Bangor Rotor-Wing
+- L2: Lewiston Rotor-Wing
+- L3: Bangor Fixed-Wing
+- L4: Sanford Rotor-Wing
 
-LF3 的所属基地因为是Fixed-Wing基地所以飞的比较远。中位数为158miles。而其他三个基地都是RotorWing，所以中位数在50miles左右。（这里取中位数是因为防止个别较远的任务影响平均值）。
+L3 has a much higher median mileage and wider outliers, consistent with its role as a Fixed-Wing base handling longer-distance missions.
+
+L1 has the most missions and the second-highest median mileage, suggesting it is a larger Rotor-Wing base with broader coverage.
+
 ```js
 const response = await fetch('http://localhost:5001/api/boxplot')
 ```
@@ -82,20 +91,17 @@ html`<div style="margin-top: 20px;">
 </div>`
 ```
 
+##  Pickup Location Heatmap
+The heatmap displays the PU cities associated with each unit.
 
-<!-- 地图图层 -->
-##  任务起始地热力图
-接下来在展示每个基地所属vehicle负责任务的PU city热力图。
+Because the two datasets cover different time periods and operational units, the dataset and unit type can be selected by the user.
 
-因为没有数据文件里没有直接给出每个单位的所属地点，根据热力图，我们能大概估计出每个单位的所在城市。
-可以选择想要分析的数据文件，因为这两个文件跨时间不同，而且包含基地也不一样，所以我们就分开来展示了。
-
-有趣的发现：在roux文件里，LF3基地的中心是在bangor，但是更新的数据表现出LF3基地似乎移动至caribou.
+This visualization highlights the mission coverage area for each base.
 
 ```js
-const dataSet = Inputs.radio(["Roux(2012-2023)", "Master(2021-2024)"], {label: "Select a DataSet",value:"Roux(2012-2023)"})
-const basePlaceRoux = Inputs.checkbox(['ALL','LF1','LF2','LF3','LF4'], {label: "Select base place",value:['ALL']});
-const basePlaceMaster = Inputs.checkbox(['ALL','LF3', 'neoGround', 'LF1', 'L-CCT', 'LF2', 'LF4', 'B-CCT','S-CCT'], {label:"Select base place",value:['ALL']})
+const dataSet = Inputs.radio(["Roux Full Dispatch Data-redacted-v2.csv(2012-2023)", "FlightTransportsMaster.csv(2021-2024)"], {label: "Select a DataSet",value:"Roux Full Dispatch Data-redacted-v2.csv(2012-2023)"})
+const basePlaceRoux = Inputs.checkbox(['ALL','LF1','LF2','LF3','LF4'], {label: "Select Unit Type",value:['ALL']});
+const basePlaceMaster = Inputs.checkbox(['ALL','LF3', 'neoGround', 'LF1', 'L-CCT', 'LF2', 'LF4', 'B-CCT','S-CCT'], {label:"Select Unit Type",value:['ALL']})
 ```
 
 ```js
@@ -109,7 +115,7 @@ const dateSetFile = Generators.input(dataSet)
 
 ```js
 let selectPlaceValue = null
-if(dateSetFile=='Roux(2012-2023)'){
+if(dateSetFile=='Roux Full Dispatch Data-redacted-v2.csv(2012-2023)'){
   display(basePlaceRoux)
   selectPlaceValue = Generators.input(basePlaceRoux)
 }else{
@@ -175,15 +181,15 @@ if(mapError){
 }
 ```
 
-## 从基地出发-接到病人时间分析
-数据说明：
+## Response Time Analysis (Base → Patient Location)
+<div class="note" label='Data Notes'>
 
-- 由于roux数据的时间的日期比较混乱，处理跨日任务的时候有问题。所以这里只选择master文件（2021.8-2023.8）的数据来分析。
-- 所选字段：enrtime（车辆出发时间）- atstime（到达患者所在地时间）
-- 只显示有10个样本以上的城市
+- Only the *FlightTransportsMaster.csv(2021-2024)* dataset is used, as the *Roux Full Dispatch Data-redacted-v2.csv(2012-2023)* dataset contains inconsistent date formats that affect cross-day missions.
+- Response time is calculated as *enrtime* – *atstime* (vehicle departure to arrival at patient location).
+- Only cities with more than 10 missions are included.
 
-通过这幅图主要想显示出，是否有一些任务，因为病人所在的城市离特定的基地远，导致响应时间长。
-- 下面这幅图可以看出，每个城市在转运任务上都有自己偏好的基地。，因为城市的散点颜色都较为一致。我们需要重点关注靠右边的这些散点，比如portland，几个运送新生儿的任务用了明显较长的时间，而响应时间快的任务都是有LF3 LF4负责，说明neoGround离protland太远了，可以考虑建一个近的。
+</div>
+
 
 ```js
 const timeDiffResponse = await fetch('http://localhost:5001/api/get_master_response_time')
@@ -203,3 +209,8 @@ import {responseTimeChart} from "./components/scenario-modeling/responseTimeChar
 responseTimeChart(responseTimeData)
 ```
 
+This chart examines whether certain cities have longer response times because they are farther from a specific base.
+
+Cities show clear preferences for specific bases, indicated by the consistent point colors within each city. The rightmost points on each horizontal line highlight missions with the longest en-route times. 
+
+For example, Portland shows several neonatal transports with much longer travel times handled by neoGround, while faster missions were completed by LF3 and LF4. This pattern suggests that neoGround is relatively distant from Portland, indicating potential value in establishing a closer base.

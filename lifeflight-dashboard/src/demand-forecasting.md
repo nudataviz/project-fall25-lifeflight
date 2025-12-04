@@ -88,11 +88,10 @@ const corrData = await corrResponse.json()
 ```js
 import {correlationPlot} from './components/demand-forecasting/correlationPlot.js'
 ```
+<div class='grid grid-cols-2'>
 
 <div class='card'>
 <h4>Extra variables parameters<h4/>
-<div style='display: flex; align-items:center; gap: 20px;'>
-<div style='flex: 1; min-width: 300px;'>
 
 ```js
 const availableRegressors = [
@@ -130,13 +129,15 @@ const regressorPriorScale = view(Inputs.range([0.001, 0.5], {
   format: (x) => x.toFixed(3)
 }))
 ```
-</div>
-<div style='flex: 2; min-width: 0; display: flex; align-items: right; justify-content: center;'>
-${correlationPlot(corrData.data.count_correlations)}
-</div>
-</div>
+
 </div>
 
+
+<div class='card'>
+${correlationPlot(corrData.data.count_correlations)}
+</div>
+
+</div>
 
 
 

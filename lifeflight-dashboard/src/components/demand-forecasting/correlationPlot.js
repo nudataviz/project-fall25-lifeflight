@@ -32,7 +32,8 @@ export function correlationPlot(correlationData) {
     title: "Correlation with Mission Count",
     height: 300,
     width: 500,
-    marginLeft: 100,
+    marginTop: 50,
+    marginLeft: 70,
     marginBottom: 70,
     x: {
       label: "Variable",
