@@ -10,16 +10,13 @@ title: "Service Coverage: All Units"
 
 
 # 2.2 Service Coverage: All Units
-数据说明：
-- 涉及时间计算，所以用master数据集（2021.8-2024.8）
-- 选择参数'BANGOR', 'LEWISTON', 'SANFORD'是三个已有的运营基地:
-<div class="note" label>
-LifeFlight operates three bases: Bangor (Northern Light Eastern Maine Medical Center and Bangor International Airport), Lewiston (Central Maine Medical Center and Auburn-Lewiston Airport), and Sanford (Sanford Seacoast Regional Airport)
+<div class="note" label="Data Notes">
+
+- This analysis uses the *FlightTransportsMaster.csv(2021-2024)* as it involves time-based calculations.
+- LifeFlight operates three bases: Bangor, Lewiston, and Sanford ([LifeFlight Website](https://lifeflightmaine.org/our-services/helicopter-transport/)).
+- City coordinates are used as approximate base locations.
+- Optional Base Locations are selected from cities with higher mission volumes.
 </div>
-
-- 这里我们都用城市坐标作为大致的基地位置。
-- Optional Base Locations 为服务次数较多的城市（优先考虑）
-
 
 ## Input Parameters
 ```js
@@ -91,6 +88,30 @@ if(existBaseValue && existBaseValue.length > 0){
 }
 ```
 
+```js
+// 显示地图
+if(rangeMapError){
+  display(html`<div class="card" style="padding: 20px; color: red;">
+    <h3>Error loading range map</h3>
+    <p>${rangeMapError}</p>
+  </div>`)
+} else if(rangeMapData){
+  display(html`
+    <div class="card" style="overflow: hidden;">
+      <h2>Service Range Map</h2>
+      <h3 style="color: #666;">
+        Service coverage with ${serviceRadiusValue} mile radius
+      </h3>
+      ${rangeMap(rangeMapData.heatmapData, rangeMapData.baseLocations, serviceRadiusValue)}
+    </div>
+  `)
+} else if(!existBaseValue || existBaseValue.length === 0){
+  display(html`<div class="card" style="padding: 20px; color: #666;">
+    <p>Please select at least one base location to view the range map.</p>
+  </div>`)
+}
+```
+
 ## Coverage Statistics
 ```js
 if(rangeMapStats){
@@ -131,42 +152,4 @@ if(rangeMapStats){
 }
 ```
 
-
-```js
-// 显示地图
-if(rangeMapError){
-  display(html`<div class="card" style="padding: 20px; color: red;">
-    <h3>Error loading range map</h3>
-    <p>${rangeMapError}</p>
-  </div>`)
-} else if(rangeMapData){
-  display(html`
-    <div class="card" style="overflow: hidden;">
-      <h2>Service Range Map</h2>
-      <h3 style="color: #666;">
-        Service coverage with ${serviceRadiusValue} mile radius
-      </h3>
-      ${rangeMap(rangeMapData.heatmapData, rangeMapData.baseLocations, serviceRadiusValue)}
-    </div>
-  `)
-} else if(!existBaseValue || existBaseValue.length === 0){
-  display(html`<div class="card" style="padding: 20px; color: #666;">
-    <p>Please select at least one base location to view the range map.</p>
-  </div>`)
-}
-```
-
-<!-- ```js
-const fuentes=d3.dsv(";","https://gist.githubusercontent.com/serman/37c055edbfffda1a22c725b95bba8a1f/raw/740e056a4aba5c7b71e05b6e225c7547e2b3d825/Inventario_Fuentes2019.csv")
-
-```
-
-```js
-import {fountainsHeatmap} from './components/scenario-modeling/test.js'
-```
-
-```js
-fountainsHeatmap(fuentes)
-```
- -->
 
