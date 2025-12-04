@@ -23,7 +23,7 @@ try{
   <a href="https://lifeflightmaine.org/">LifeFlight Website<span style="display: inline-block; margin-left: 0.25rem;">↗︎</span></a>
 </div>
 
-这里是当前月份的情况。因为我们没有实时的数据，所以用能拿到的最新的数据作为样板，即2024年8月。
+Last data date: August 2024; this is the data for August.
 <!-- indicator card -->
 <div class="grid grid-cols-4">
   <div class="card">
@@ -45,8 +45,7 @@ try{
   </div>
 </div>
 
---- 时间分析（主要数据，
-1. 本月响应时间和任务量的24h分布图
+# <span style="white-space: nowrap;">时间分析：本月响应时间和任务量的24h分布图</span>
 
 ```js
 const responseDis = await fetch('http://localhost:5001/api/get_24hour_distribution')
@@ -55,7 +54,6 @@ const dataDis = await responseDis.json()
 ```js
 dataDis
 ```
-# 1 本月任务量分布图
 ```js
 import {missionDisPlot} from './components/dashboard-kpi/missionDisPlot.js'
 ```
@@ -65,7 +63,7 @@ const distributionMode = view(Inputs.select(
   {
     label: "Distribution Type",
     value: "hourly",
-    format: (x) => x === "hourly" ? "24小时分布" : "一周分布"
+    format: (x) => x === "hourly" ? "24-Hour Distribution" : "Weekly Distribution"
   }
 ))
 ```
@@ -77,7 +75,8 @@ const missionData = distributionMode === "hourly"
 ```js
 missionDisPlot(missionData, distributionMode)
 ```
-# 2本月每小时平均响应时间(disptime-enrtime)
+Average response time per hour this month (disptime - enrtime)
+
 ```js
 import {hourlyResTime} from './components/dashboard-kpi/hourlyResTime.js'
 ```
@@ -86,7 +85,8 @@ import {hourlyResTime} from './components/dashboard-kpi/hourlyResTime.js'
 hourlyResTime(dataDis.data.response_time)
 ```
 
-# 3各基地工作负载
+# 各基地工作负载
+
 Did LFOM transport patient 为yes 的时候，统计airUnit和groundUnit的数量
 
 ```js
@@ -108,10 +108,12 @@ baseWorkloadPlot(dataBase.data)
 
 
 
-# 4 transportByPrimaryQ
+# Transport by Primary Q
+
 分析transportByPrimaryQ字段。：最合适的资产（飞机/车辆）是否无延迟地运输了病人
 - appropriateAsset (Who should have gone if available) 应该去的
 - respondingAssets 响应的
+
 ----- 下面的部分要修改
 ```js
 let resTest=null
@@ -138,14 +140,14 @@ ${delayReasonPlot(data.delayReasonData)}
 
 </div>
 
-# 5 各基地按预期完成比例
+# <span style="white-space: nowrap;">各基地按预期完成比例和各基地没有响应的原因分析</span>
+
 展示每个基地预期要出任务的数量，以及按照预期完成的比例
 
 <div class='card'>
 ${expectedCompletionPlot(data.expectedCompletionData)}
 </div>
 
-# 6 各基地没有响应的原因分析
 展示LF1-LF4各基地没有响应的原因占比
 
 ```js
@@ -155,6 +157,8 @@ import {noResponseReasonPlot} from './components/dashboard-kpi/noResponseReasonP
 <div class='card'>
 ${noResponseReasonPlot(data.noResponseReasonsData)}
 </div>
+
+# 热力图
 
 <!-- map -->
 ```js

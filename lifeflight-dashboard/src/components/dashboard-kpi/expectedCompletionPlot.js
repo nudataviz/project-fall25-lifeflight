@@ -9,13 +9,20 @@ export function expectedCompletionPlot(data) {
     completionRate: d.total_count > 0 ? d.completed_count / d.total_count : 0
   }));
   
+  // 根据基地数量动态计算宽度，避免右边空白
+  const baseCount = processedData.length;
+  // 每个基地约65px（包括间距），加上标题和边距
+  const calculatedWidth = Math.max(400, baseCount * 65 + 40);
+  
   return Plot.plot({
     title: "Expected Completion Rate by Base (2024)",
     axis: null,
     label: null,
+    width: calculatedWidth,
     height: 200,
     marginTop: 20,
     marginBottom: 70,
+    marginRight: 20,
     fx: {
       label: "Expected Base"
     },

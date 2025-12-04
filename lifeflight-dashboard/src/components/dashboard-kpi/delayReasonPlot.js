@@ -21,7 +21,7 @@ export function delayReasonPlot(data) {
     },
     marks: [
       Plot.ruleX([0]),
-      Plot.barX(processedData, {x: "count", y: "reason", sort: {y: "x", reverse: true}})
+      Plot.barX(processedData, {x: "count", y: "reason", sort: {y: "x", reverse: true}, fill: "#87CEEB"})
     ]
   })
 }

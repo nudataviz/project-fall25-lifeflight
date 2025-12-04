@@ -11,8 +11,8 @@ export function baseWorkloadPlot(data) {
   
   return Plot.plot({
     title: "Base Workload",
-    width: 600,
-    height: 300,
+    width: 1000,
+    height: 500,
     marginLeft: 80,
     x: {
       label: "Mission Count",
@@ -24,7 +24,7 @@ export function baseWorkloadPlot(data) {
     },
     color: {
       domain: ["airUnit", "groundUnit"],
-      range: ["#2E86C1", "#E74C3C"],
+      range: ["#87CEEB", "#1E3A8A"],
       legend: true,
     },
     marks: [

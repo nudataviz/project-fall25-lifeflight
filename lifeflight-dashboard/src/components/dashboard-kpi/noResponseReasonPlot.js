@@ -15,8 +15,10 @@ export function noResponseReasonPlot(data) {
   if (processedData.length === 0) {
     return Plot.plot({
       title: "No Response Reasons by Base (2024)",
-      marginLeft: 200,
+      width: 400,
       height: 200,
+      marginLeft: 200,
+      marginRight: 20,
       marks: [
         Plot.text(["No valid data available"], {frameAnchor: "middle", fontSize: 16})
       ]
@@ -78,13 +80,19 @@ export function noResponseReasonPlot(data) {
   // 计算颜色范围
   const maxPercentage = Math.max(...heatmapData.map(d => d.percentage));
   
+  // 根据基地数量动态计算宽度，避免右边空白
+  const baseCount = allBases.length;
+  // 每个基地约75px（包括单元格和间距），加上左边距200px和右边距20px
+  const calculatedWidth = Math.max(400, baseCount * 75 + 200 + 20);
+  
   return Plot.plot({
     title: "No Response Reasons by Base (2024)",
-    width: 800,
+    width: calculatedWidth,
     height: Math.max(400, allReasons.length * 25),
     marginLeft: 200,
     marginTop: 40,
     marginBottom: 40,
+    marginRight: 20,
     x: {
       type: "band",
       label: "Base",

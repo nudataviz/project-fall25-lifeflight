@@ -4,8 +4,8 @@ import * as d3 from "npm:d3";
 export function hourlyResTime(data) {
   return Plot.plot({
     title: "Response Time by Hour of Day",
-    width: 600,
-    height: 300,
+    width: 1000,
+    height: 500,
     marginTop: 40,
     marginBottom: 50,
     marginLeft: 60,
