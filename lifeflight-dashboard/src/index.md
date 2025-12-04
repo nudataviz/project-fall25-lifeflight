@@ -110,11 +110,19 @@ baseWorkloadPlot(dataBase.data)
 
 # Transport by Primary Q
 
-分析transportByPrimaryQ字段。：最合适的资产（飞机/车辆）是否无延迟地运输了病人
-- appropriateAsset (Who should have gone if available) 应该去的
-- respondingAssets 响应的
+分析transportByPrimaryQ字段。：最合适的资产（飞机/车辆）是否无延迟地运输了病人. 字段数值是yes/no
+有两种情况：
+- 1是否是最合适的资产去运输病人
+- 2是否有延迟
 
------ 下面的部分要修改
+当这两点都满足的时候才是yes。否则是no。
+
+Delay Rate(2024.08)展示的就是每个基地这个字段transportByPrimaryQ的比例。
+
+- Delay Reason统计的delay的原因。（展示第二点）
+- 后面的各基地按预期完成比例和各基地没有响应的原因分析 是在分析第一点（1是否是最合适的资产去运输病人）
+
+
 ```js
 let resTest=null
 let data = null
@@ -141,6 +149,11 @@ ${delayReasonPlot(data.delayReasonData)}
 </div>
 
 # <span style="white-space: nowrap;">各基地按预期完成比例和各基地没有响应的原因分析</span>
+
+
+- appropriateAsset (Who should have gone if available)： 这个字段是每个任务初始被分配的任务。
+- respondingAssets：但不是每个基地都能去的，这个字段是最终执行任务的基地。
+- Expected Completion Rate by Base (2024)就展示了，按预期基地完成任务的比例
 
 展示每个基地预期要出任务的数量，以及按照预期完成的比例
 
