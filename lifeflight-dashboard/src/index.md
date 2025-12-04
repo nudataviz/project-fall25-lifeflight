@@ -142,20 +142,19 @@ ${delayReasonPlot(data.delayReasonData)}
 
 # <span style="white-space: nowrap;">各基地按预期完成比例和各基地没有响应的原因分析</span>
 
-展示每个基地预期要出任务的数量，以及按照预期完成的比例
-
-<div class='card'>
-${expectedCompletionPlot(data.expectedCompletionData)}
-</div>
-
-展示LF1-LF4各基地没有响应的原因占比
+展示每个基地预期要出任务的数量，以及按照预期完成的比例；展示LF1-LF4各基地没有响应的原因占比。
 
 ```js
 import {noResponseReasonPlot} from './components/dashboard-kpi/noResponseReasonPlot.js'
 ```
 
+<div style='display: flex;align-items: center;'>
+<div class='card'>
+${expectedCompletionPlot(data.expectedCompletionData)}
+</div>
 <div class='card'>
 ${noResponseReasonPlot(data.noResponseReasonsData)}
+</div>
 </div>
 
 # 热力图

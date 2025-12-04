@@ -19,7 +19,7 @@ export function expectedCompletionPlot(data) {
     axis: null,
     label: null,
     width: calculatedWidth,
-    height: 200,
+    height: 400,
     marginTop: 20,
     marginBottom: 70,
     marginRight: 20,
