@@ -52,9 +52,6 @@ const responseDis = await fetch('http://localhost:5001/api/get_24hour_distributi
 const dataDis = await responseDis.json()
 ```
 ```js
-dataDis
-```
-```js
 import {missionDisPlot} from './components/dashboard-kpi/missionDisPlot.js'
 ```
 ```js
@@ -95,10 +92,6 @@ const dataBase = await resBaseCount.json()
 ```
 
 ```js
-dataBase
-```
-
-```js
 import {baseWorkloadPlot} from './components/dashboard-kpi/baseWorkloadPlot.js'
 ```
 
@@ -108,19 +101,13 @@ baseWorkloadPlot(dataBase.data)
 
 
 
-# Transport by Primary Q
+# Transport by Primary Q 指标说明
 
-分析transportByPrimaryQ字段。：最合适的资产（飞机/车辆）是否无延迟地运输了病人. 字段数值是yes/no
-有两种情况：
-- 1是否是最合适的资产去运输病人
-- 2是否有延迟
+Transport by Primary Q 用于衡量：病人是否由最合适的资产（Primary asset）且无时间延迟地完成转运。当同时满足"使用预期/最合适资产"与"无延迟"两项条件时记为 Yes，否则记为 No。
 
-当这两点都满足的时候才是yes。否则是no。
+Delay Rate（2024.08）展示的是各基地在 2024 年 8 月中 Transport by Primary Q 的比例，用于整体评估不同基地按时、按预期资产完成任务的表现。Delay Reason 针对存在延迟的任务，统计造成延迟的主要原因，用于识别时间维度的瓶颈。
 
-Delay Rate(2024.08)展示的就是每个基地这个字段transportByPrimaryQ的比例。
-
-- Delay Reason统计的delay的原因。（展示第二点）
-- 后面的各基地按预期完成比例和各基地没有响应的原因分析 是在分析第一点（1是否是最合适的资产去运输病人）
+各基地按预期完成比例和各基地未响应原因分析重点关注"是否由最合适资产执行"这一维度，用于评估各基地在资产匹配和调度决策上的表现，并分析未能按预期资产响应的主要原因。
 
 
 ```js
@@ -148,14 +135,11 @@ ${delayReasonPlot(data.delayReasonData)}
 
 </div>
 
-# <span style="white-space: nowrap;">各基地按预期完成比例和各基地没有响应的原因分析</span>
+# 各基地按预期完成比例与未响应原因说明
 
+本页基于任务的预期与实际执行情况，从"是否由最合适基地执行"角度评估各基地的调度表现。字段 appropriateAsset（Who should have gone if available）表示每个任务最初被分配、预期应执行该任务的基地；字段 respondingAssets 则记录最终实际执行该任务的基地。
 
-- appropriateAsset (Who should have gone if available)： 这个字段是每个任务初始被分配的任务。
-- respondingAssets：但不是每个基地都能去的，这个字段是最终执行任务的基地。
-- Expected Completion Rate by Base (2024)就展示了，按预期基地完成任务的比例
-
-展示每个基地预期要出任务的数量，以及按照预期完成的比例；展示LF1-LF4各基地没有响应的原因占比。
+图表 Expected Completion Rate by Base (2024) 展示了 2024 年各基地在预期应出任务的总量中，由预期基地实际完成的比例，用于衡量各基地按计划执行任务的能力。同时，对 LF1–LF4 各基地在未能按预期响应的任务中，统计其"未响应原因"占比，用以分析资源占用、维护、距离限制等因素对基地按预期执行任务的影响。
 ```js
 import {noResponseReasonPlot} from './components/dashboard-kpi/noResponseReasonPlot.js'
 ```
