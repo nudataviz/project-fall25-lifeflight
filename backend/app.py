@@ -501,13 +501,10 @@ def get_master_response_time():
     print(df['time_diff_minutes'].describe())
 
 
-    # Replace NaN with None for JSON serialization
     df = df.replace({np.nan: None, pd.NA: None})
     
-    # Convert to dict and handle NaN values
     data = df.to_dict(orient='records')
-    
-    # Additional cleanup: replace any remaining NaN/NaT values
+
     for record in data:
         for key, value in record.items():
             if pd.isna(value):
@@ -906,7 +903,7 @@ def get_pareto_sensitivity_api():
 # ======== scenario modeling page - range map =========
 @app.route('/api/get_range_map', methods=['GET'])
 def get_range_map_api():
-    """Get range map with heatmap, service radius circles, and statistics"""
+    """Get range map data (heatmap data and base locations) and statistics"""
     try:
         # Get parameters - baseValue can be multiple values
         base_value = request.args.getlist('baseValue')  # Use getlist for multiple values
@@ -917,22 +914,21 @@ def get_range_map_api():
         expected_time = request.args.get('expectedTime', 20.0, type=float)  # 注意前端传的是 expectedTime
         
         from utils.scenario.get_range_map import (
-            generate_range_map, 
+            get_range_map_data, 
             calculate_range_statistics
         )
         
-        # Generate map HTML
-        html_map = generate_range_map(base_value, radius, expected_time)
+        # Get map data (heatmap data and base locations)
+        map_data = get_range_map_data(base_value, radius, expected_time)
         
         # Calculate statistics
         stats = calculate_range_statistics(base_value, radius, expected_time)
         
-        # Return both map HTML and statistics
-        # Since we need to return HTML for iframe, we'll return HTML with embedded data
-        # Or we can return JSON with map HTML as a field
+        # Return map data and statistics
         return jsonify({
             'status': 'success',
-            'map_html': html_map,
+            'heatmap_data': map_data['heatmap_data'],
+            'base_locations': map_data['base_locations'],
             'statistics': stats
         })
         
@@ -990,7 +986,7 @@ def get_special_base_statistics():
         center_type = request.args.get('centerType')
         radius = request.args.get('radius', 50.0, type=float)
         expected_time = request.args.get('expectedTime', 20.0, type=float)
-        base_cities_input = request.args.get('baseCities', None)  # Optional, comma-separated cities
+        base_cities_input = request.args.get('baseCities', None)  #包含默认城市，comma-separated cities
         
         # Parse and validate cities on backend
         valid_cities = []

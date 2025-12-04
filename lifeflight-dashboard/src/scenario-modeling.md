@@ -1,191 +1,27 @@
 ---
-title: Scenario-modeling
+title: "Service Coverage: All Units"
 ---
 
-# 2 Scenario Modeling
-
-<br/>
-
-<!-- 分析数据 -->
-
-## 2.1 Analysis of the Existing Base
-
-```js
-const response = await fetch('http://localhost:5001/api/boxplot')
-```
-
-```js
-const res = await response.json()
-```
-
-```js
-const boxplotData = res.data.data
-const summary = res.data.summary
-```
-
-<div class = 'card' style='width:150px'>
-
-```js
-const showOutlier = view(Inputs.toggle({label:'Show outlier',value: true}))
-```
+<div class="breadcrumb" style="margin-bottom: 2rem; color: #666; font-size: 0.9rem;">
+  <a href="/">Home</a> › 
+  <span style="color: #333; font-weight: 500;">What-If: Coverage Optimization</span> › 
+  <span style="color: #333; font-weight: 500;">2.2 Service Coverage: All Units</span>
 </div>
 
-```js
-import {boxPlot} from "./components/scenario-modeling/boxPlot.js"
-```
 
-```js
-boxPlot(boxplotData,showOutlier) 
-```
+# 2.2 Service Coverage: All Units
+数据说明：
+- 涉及时间计算，所以用master数据集（2021.8-2024.8）
+- 选择参数'BANGOR', 'LEWISTON', 'SANFORD'是三个已有的运营基地:
+<div class="note" label>
+LifeFlight operates three bases: Bangor (Northern Light Eastern Maine Medical Center and Bangor International Airport), Lewiston (Central Maine Medical Center and Auburn-Lewiston Airport), and Sanford (Sanford Seacoast Regional Airport)
+</div>
 
-```js
-html`<div style="margin-top: 20px;">
-  <h3>Vehicle Mileage Statistics</h3>
-  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 15px;">
-    ${Object.keys(summary || {}).map(veh => {
-      const stats = summary[veh];
-      const fieldLabels = {
-        count: 'Count',
-        min: 'Min',
-        q1: 'Q1',
-        median: 'Median',
-        mean: 'Mean',
-        q3: 'Q3',
-        max: 'Max',
-        std: 'Std Dev'
-      };
-      
-      return html`<div class="card">
-        <h4>${veh}</h4>
-        <table style="width: 100%; border-collapse: collapse;">
-          ${Object.entries(stats).map(([key, value]) => {
-            const label = fieldLabels[key] || key;
-            const displayValue = key === 'count' 
-              ? value 
-              : `${value.toFixed(2)} miles`;
-            return html`<tr>
-              <td style="padding: 4px 8px; color: #666;">${label}:</td>
-              <td style="padding: 4px 8px; text-align: right; font-weight: 400;">${displayValue}</td>
-            </tr>`;
-          })}
-        </table>
-      </div>`;
-    })}
-  </div>
-</div>`
-```
-
-<!-- 地图图层 -->
-```js
-const dataSet = Inputs.radio(["Roux(2012-2023)", "Master(2021-2024)"], {label: "Select a DataSet",value:"Roux(2012-2023)"})
-const basePlaceRoux = Inputs.checkbox(['ALL','LF1','LF2','LF3','LF4'], {label: "Select base place",value:['ALL']});
-const basePlaceMaster = Inputs.checkbox(['ALL','LF3', 'neoGround', 'LF1', 'L-CCT', 'LF2', 'LF4', 'B-CCT','S-CCT'], {label:"Select base place",value:['ALL']})
-```
-
-```js
-dataSet
-```
+- 这里我们都用城市坐标作为大致的基地位置。
+- Optional Base Locations 为服务次数较多的城市（优先考虑）
 
 
-```js
-const dateSetFile = Generators.input(dataSet)
-```
-
-```js
-let selectPlaceValue = null
-if(dateSetFile=='Roux(2012-2023)'){
-  display(basePlaceRoux)
-  selectPlaceValue = Generators.input(basePlaceRoux)
-}else{
-  display(basePlaceMaster)
-  selectPlaceValue = Generators.input(basePlaceMaster)
-}
-```
-
-```js
-let mapHtml = null
-let mapError = null
-
-if(selectPlaceValue && selectPlaceValue.length > 0){
-  try{
-    let basePlacesParam = selectPlaceValue.includes('ALL') 
-      ? 'ALL' 
-      : selectPlaceValue.join(',')
-    
-    const params = new URLSearchParams({
-      dataset: dateSetFile,
-      base_places: basePlacesParam
-    })
-    
-    const mapResponse = await fetch(`http://localhost:5001/api/heatmap_by_base?${params}`)
-    if(!mapResponse.ok){
-      throw new Error(`HTTP ${mapResponse.status}: ${mapResponse.statusText}`)
-    }
-    mapHtml = await mapResponse.text()
-    mapError = null
-  }catch(e){
-    mapError = e.message
-    mapHtml = null
-    console.error('Map fetch error:', e)
-  }
-}
-```
-
-```js
-html`
-    <div class="card" style="overflow: hidden;">
-      <h2>Vehicle Base Heatmap</h2>
-      <h3 style="color: #666;">
-        Heatmap of missions by selected base locations (${dateSetFile})
-      </h3>
-      <iframe 
-        srcdoc=${mapHtml}
-        style="width: 100%; height: 500px; border: none;"
-        title="Base Heatmap"
-      ></iframe>
-    </div>
-  `
-```
-
-接下来分析从出发到接到病人的时间，由于roux数据的时间有问题，这里只选择master的数据来分析。
-
-- 下面这幅图可以看出，每个城市在转运任务上都有自己偏好的基地。，因为城市的散点颜色都较为一致。我们需要重点关注靠右边的这些散点，比如portland，几个运送新生儿的任务用了明显较长的时间，而响应时间快的任务都是有LF3 LF4负责，说明neoGround离protland太远了，可以考虑建一个近的。
-
-```js
-const timeDiffResponse = await fetch('http://localhost:5001/api/get_master_response_time')
-
-const response_time = await timeDiffResponse.json() 
-```
-
-```js
-const responseTimeData = response_time.data || []
-```
-
-```js
-import {responseTimeChart} from "./components/scenario-modeling/responseTimeChart.js"
-```
-
-```js
-responseTimeChart(responseTimeData)
-```
-
-
-
-<!-- 输入输出：
- -->
-
-## 2.2 What-If Scenario Panel
-
-<!-- ```js
-// 控制input方法：
-// 声明的是input元素
-const colors = Inputs.checkbox(["red", "green", "blue"], {label: "Existing Base Locations",value:["red", "green", "blue"]});
-// 放置元素
-colors
-// 取响应式值
-const x = Generators.input(colors);
-``` -->
-
+## Input Parameters
 ```js
 const existBase = Inputs.checkbox(['BANGOR', 'LEWISTON', 'SANFORD'], {label: "Existing Base Locations",value:['BANGOR', 'LEWISTON', 'SANFORD']});
 
@@ -214,11 +50,13 @@ const serviceRadiusValue = Generators.input(serviceRadius)
 const expectedTimeValue = Generators.input(expectedTime)
 ```
 
-这里也需要计算时间，所以要用master数据集
 
-## General Base Evaluation （airUnit）
 ```js
-let rangeMapHtml = null
+import {rangeMap} from './components/scenario-modeling/rangeMap.js'
+```
+
+```js
+let rangeMapData = null
 let rangeMapError = null
 let rangeMapStats = null
 
@@ -237,24 +75,26 @@ if(existBaseValue && existBaseValue.length > 0){
     if(!rangeMapResponse.ok){
       throw new Error(`HTTP ${rangeMapResponse.status}: ${rangeMapResponse.statusText}`)
     }
-    const rangeMapData = await rangeMapResponse.json()
-    rangeMapHtml = rangeMapData.map_html
-    rangeMapStats = rangeMapData.statistics
+    const responseData = await rangeMapResponse.json()
+    rangeMapData = {
+      heatmapData: responseData.heatmap_data || [],
+      baseLocations: responseData.base_locations || []
+    }
+    rangeMapStats = responseData.statistics
     rangeMapError = null
   }catch(e){
     rangeMapError = e.message
-    rangeMapHtml = null
+    rangeMapData = null
     rangeMapStats = null
     console.error('Range map fetch error:', e)
   }
 }
 ```
 
+## Coverage Statistics
 ```js
-// 显示统计信息
 if(rangeMapStats){
   display(html`<div style="margin-top: 20px;">
-    <h3>Coverage Statistics</h3>
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 15px;">
       ${Object.entries(rangeMapStats.coverage_stats || {}).map(([base, count]) => {
         return html`<div class="card">
@@ -299,18 +139,14 @@ if(rangeMapError){
     <h3>Error loading range map</h3>
     <p>${rangeMapError}</p>
   </div>`)
-} else if(rangeMapHtml){
+} else if(rangeMapData){
   display(html`
     <div class="card" style="overflow: hidden;">
       <h2>Service Range Map</h2>
       <h3 style="color: #666;">
         Service coverage with ${serviceRadiusValue} mile radius
       </h3>
-      <iframe 
-        srcdoc=${rangeMapHtml}
-        style="width: 100%; height: 500px; border: none;"
-        title="Range Map"
-      ></iframe>
+      ${rangeMap(rangeMapData.heatmapData, rangeMapData.baseLocations, serviceRadiusValue)}
     </div>
   `)
 } else if(!existBaseValue || existBaseValue.length === 0){
@@ -320,233 +156,17 @@ if(rangeMapError){
 }
 ```
 
-## Special Base Evaluation（groundUnit）
-
-Special Base: B-CCT, L-CCT, S-CCT, neoGround
-
-```js
-// 获取所有special base的速度
-const speedsResponse = await fetch('http://localhost:5001/api/get_special_base_speeds')
-const speedsData = await speedsResponse.json()
-const baseSpeeds = speedsData.speeds || {}
-```
-
-```js
-// 显示速度统计
-if(Object.keys(baseSpeeds).length > 0){
-  display(html`<div class="card" style="margin-top: 20px;">
-    <h3>Special Base Speed Statistics</h3>
-    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-      ${Object.entries(baseSpeeds).map(([base, speed]) => {
-        return html`<tr>
-          <td style="padding: 8px; color: #666;">${base}:</td>
-          <td style="padding: 8px; text-align: right; font-weight: 500;">${speed.toFixed(2)} mph</td>
-        </tr>`;
-      })}
-    </table>
-  </div>`)
-}
-```
-
-```js
-// 选择center类型
-const centerType = Inputs.radio(['neoGround', 'L-CCT', 'B-CCT', 'S-CCT'], {
-  label: "Select Center Type",
-  value: 'neoGround'
-})
-```
-
-```js
-centerType
-```
-
-```js
-const selectedCenterType = Generators.input(centerType)
-```
-
-```js
-// 参数输入
-const specialBaseRadius = Inputs.range([20, 300], {label: "Service Radius (miles)", value: 50, step: 1})
-const specialBaseExpectedTime = Inputs.range([10, 50], {label: "Expected Dispatch-to-Patient Time (Minutes)", value: 20, step: 1})
-```
-
-```html
-${specialBaseRadius}
-${specialBaseExpectedTime}
-```
-
-```js
-const specialBaseRadiusValue = Generators.input(specialBaseRadius)
-const specialBaseExpectedTimeValue = Generators.input(specialBaseExpectedTime)
-```
-
-```js
-// 获取城市列表
-const citiesResponse = await fetch('http://localhost:5001/api/get_maine_cities')
-const citiesData = await citiesResponse.json()
-const maineCities = citiesData.cities || []
-const maineCitiesSet = new Set(maineCities.map(c => c.toUpperCase().trim()))
-```
-
-```js
-// 获取当前center的初始base城市
-let initialBaseCity = null
-if(selectedCenterType){
-  try{
-    const tempParams = new URLSearchParams({
-      centerType: selectedCenterType,
-      radius: 50,
-      expectedTime: 20
-    })
-    const tempResponse = await fetch(`http://localhost:5001/api/get_special_base_statistics?${tempParams}`)
-    if(tempResponse.ok){
-      const tempData = await tempResponse.json()
-      // 从coverage_stats中获取初始base城市
-      const coverageStats = tempData.statistics?.coverage_stats || {}
-      initialBaseCity = Object.keys(coverageStats)[0] || null
-    }
-  }catch(e){
-    console.error('Error getting initial base city:', e)
-  }
-}
+<!-- ```js
+const fuentes=d3.dsv(";","https://gist.githubusercontent.com/serman/37c055edbfffda1a22c725b95bba8a1f/raw/740e056a4aba5c7b71e05b6e225c7547e2b3d825/Inventario_Fuentes2019.csv")
 
 ```
 
 ```js
-// 使用Inputs.textarea创建输入框，初始值为初始base城市
-const cityTextarea = Inputs.textarea({
-  label: "Base Cities (comma-separated)",
-  placeholder: "Enter city names separated by commas (e.g., PORTLAND, BANGOR)",
-  value: initialBaseCity || "",
-  rows: 4,
-  submit: true
-})
+import {fountainsHeatmap} from './components/scenario-modeling/test.js'
 ```
 
 ```js
-cityTextarea
+fountainsHeatmap(fuentes)
 ```
-
-```js
-// 获取输入值（直接发送给后端处理）
-const cityTextareaValue = Generators.input(cityTextarea)
-```
-
-```js
-// 获取special base统计信息
-let specialBaseMapHtml = null
-let specialBaseStats = null
-let specialBaseError = null
-
-if(selectedCenterType){
-  try{
-    const params = new URLSearchParams({
-      centerType: selectedCenterType,
-      radius: specialBaseRadiusValue,
-      expectedTime: specialBaseExpectedTimeValue
-    })
-    
-    // 发送城市列表给后端处理（如果有输入）
-    if(cityTextareaValue && typeof cityTextareaValue === 'string' && cityTextareaValue.trim()){
-      params.append('baseCities', cityTextareaValue)
-    }
-    
-    const specialBaseResponse = await fetch(`http://localhost:5001/api/get_special_base_statistics?${params}`)
-    if(!specialBaseResponse.ok){
-      throw new Error(`HTTP ${specialBaseResponse.status}: ${specialBaseResponse.statusText}`)
-    }
-    const specialBaseData = await specialBaseResponse.json()
-    specialBaseMapHtml = specialBaseData.map_html
-    specialBaseStats = specialBaseData.statistics
-    specialBaseError = null
-  }catch(e){
-    specialBaseError = e.message
-    specialBaseMapHtml = null
-    specialBaseStats = null
-    console.error('Special base fetch error:', e)
-  }
-}
-```
-
-```js
-// 显示统计信息
-if(specialBaseStats){
-  display(html`<div style="margin-top: 20px;">
-    <h3>Special Base Statistics - ${selectedCenterType}</h3>
-    
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 15px;">
-      ${Object.entries(specialBaseStats.coverage_stats || {}).map(([base, count]) => {
-        return html`<div class="card">
-          <h4>${base}</h4>
-          <p style="font-size: 18px; font-weight: bold; color: #2E86C1; margin: 10px 0;">
-            ${count} cities covered
-          </p>
-        </div>`;
-      })}
-    </div>
-    
-    <div class="card" style="margin-top: 15px;">
-      <h4>Speed Statistics</h4>
-      <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-        <tr>
-          <td style="padding: 8px; color: #666;">Median Speed:</td>
-          <td style="padding: 8px; text-align: right; font-weight: 500;">${specialBaseStats.speed_stats?.median_speed_mph?.toFixed(2) || 0} mph</td>
-        </tr>
-      </table>
-    </div>
-    
-    <div class="card" style="margin-top: 15px;">
-      <h4>Compliance Statistics</h4>
-      <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-        <tr>
-          <td style="padding: 8px; color: #666;">Total Tasks:</td>
-          <td style="padding: 8px; text-align: right; font-weight: 500;">${specialBaseStats.compliance_stats?.total_tasks || 0}</td>
-        </tr>
-        <tr>
-          <td style="padding: 8px; color: #666;">Compliant Tasks:</td>
-          <td style="padding: 8px; text-align: right; font-weight: 500; color: #28B463;">${specialBaseStats.compliance_stats?.compliant_tasks || 0}</td>
-        </tr>
-        <tr>
-          <td style="padding: 8px; color: #666;">Compliance Rate:</td>
-          <td style="padding: 8px; text-align: right; font-weight: 500; color: #28B463;">${specialBaseStats.compliance_stats?.compliance_rate?.toFixed(2) || 0}%</td>
-        </tr>
-        <tr>
-          <td style="padding: 8px; color: #666;">Avg Response Time:</td>
-          <td style="padding: 8px; text-align: right; font-weight: 500;">${specialBaseStats.compliance_stats?.avg_response_time?.toFixed(2) || 0} minutes</td>
-        </tr>
-      </table>
-    </div>
-  </div>`)
-}
-```
-
-```js
-// 显示地图
-if(specialBaseError){
-  display(html`<div class="card" style="padding: 20px; color: red;">
-    <h3>Error loading special base map</h3>
-    <p>${specialBaseError}</p>
-  </div>`)
-} else if(specialBaseMapHtml){
-  display(html`
-    <div class="card" style="overflow: hidden;">
-      <h2>Special Base Range Map - ${selectedCenterType}</h2>
-      <h3 style="color: #666;">
-        Service coverage with ${specialBaseRadiusValue} mile radius
-        ${cityTextareaValue && cityTextareaValue.trim() ? `(Base Cities: ${cityTextareaValue})` : ''}
-      </h3>
-      <iframe 
-        srcdoc=${specialBaseMapHtml}
-        style="width: 100%; height: 500px; border: none;"
-        title="Special Base Range Map"
-      ></iframe>
-    </div>
-  `)
-} else if(!selectedCenterType){
-  display(html`<div class="card" style="padding: 20px; color: #666;">
-    <p>Please select a center type to view the map.</p>
-  </div>`)
-}
-```
-
+ -->
 

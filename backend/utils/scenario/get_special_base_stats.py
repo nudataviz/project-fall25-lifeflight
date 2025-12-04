@@ -189,7 +189,7 @@ def calculate_special_base_statistics(
         center_type: One of 'neoGround', 'L-CCT', 'B-CCT', 'S-CCT'
         radius_miles: Service radius in miles
         expected_time: Expected response time in minutes
-        base_cities_list: Optional list of base city names (for what-if scenario)
+        base_cities_list: list of base city names (for what-if scenario)
         
     Returns:
         Dict with coverage stats, compliance stats, speed stats, and processed data

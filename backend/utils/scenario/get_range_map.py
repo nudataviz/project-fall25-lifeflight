@@ -239,6 +239,55 @@ def calculate_range_statistics(
     }
 
 
+def get_range_map_data(
+    base_names: List[str],
+    radius_miles: float,
+    expected_time: float,
+    center_type: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Get map data for frontend rendering (heatmap data and base locations).
+    
+    Args:
+        base_names: List of base city names
+        radius_miles: Service radius in miles
+        expected_time: Expected dispatch time (not used for map data, but kept for consistency)
+        center_type: Optional center type filter
+        
+    Returns:
+        Dict with heatmap_data and base_locations
+    """
+    # Load data for heatmap
+    df = read_data('FlightTransportsMaster.csv')
+    df = df[df['PU State'] == 'Maine']
+    if center_type:
+        df = df[df['TASC Primary Asset '] == center_type]
+    
+    # Get city coordinates
+    city_coords = get_city_coordinates(isOnlyMaine=True)
+    
+    # Process city demand for heatmap
+    city_demand = process_city_demand(df, city_coords, isOnlyMaine=True)
+    
+    # Get base locations
+    base_locations = get_base_coordinates(base_names)
+    
+    # Convert city_demand to list of dicts for JSON serialization
+    heatmap_data = []
+    if len(city_demand) > 0:
+        heatmap_data = city_demand[['latitude', 'longitude', 'task_count']].to_dict(orient='records')
+        # Replace NaN with None for JSON serialization
+        for record in heatmap_data:
+            for key, value in record.items():
+                if pd.isna(value):
+                    record[key] = None
+    
+    return {
+        'heatmap_data': heatmap_data,
+        'base_locations': base_locations
+    }
+
+
 def generate_range_map(
     base_names: List[str],
     radius_miles: float,

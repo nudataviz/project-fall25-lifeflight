@@ -1,6 +1,11 @@
 ---
 title: Demand Forecasting
 ---
+<div class="breadcrumb" style="margin-bottom: 2rem; color: #666; font-size: 0.9rem;">
+  <a href="/">Home</a> › 
+  <span style="color: #333; font-weight: 500;">Forecasting</span> › 
+  <span style="color: #333; font-weight: 500;">1 Demand Forecasting</span>
+</div>
 
 # 1 Demand Forecasting
 
