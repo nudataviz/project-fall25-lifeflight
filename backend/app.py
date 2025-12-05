@@ -5,26 +5,11 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from config import config
-from utils.heatmap import generate_city_demand_heatmap, map_to_html
 from utils.getData import read_data
-from utils.responseTime import calculate_response_time
-from utils.veh_count import calculate_veh_count
 from utils.predicting.predict_demand import cross_validate_prophet
 from utils.predicting.predict_demand import prophet_predict
 from utils.predicting.predict_demand import extract_forecast_data
-from utils.predicting.predict_demand import cross_validate_prophet
 from utils.seasonality_1_2 import get_seasonality_heatmap
-from utils.demographics_1_3 import get_demographics_elasticity
-from utils.event_impact_1_4 import get_event_impact_analysis, get_all_events
-from utils.weather_risk_2_4 import get_weather_risk_analysis
-from utils.scenario_whatif_2_1 import simulate_scenario, get_base_locations, compare_scenarios
-from utils.scenario.get_boxplot_2_1 import get_boxplot
-from utils.pareto_sensitivity_2_3 import get_pareto_sensitivity_analysis
-from utils.base_siting_2_2 import get_base_siting_analysis
-from utils.kpi_bullets_4_1 import get_kpi_bullets
-from utils.trend_wall_4_2 import get_trend_wall_data
-from utils.cost_benefit_4_3 import get_cost_benefit_throughput_data
-from utils.safety_spc_4_4 import get_safety_spc_data
 from utils.scenario.get_time_diff import get_time_diff_seconds
 
 app = Flask(__name__)
@@ -36,70 +21,17 @@ app.config.from_object(config[env])
 # Enable CORS for cross-origin requests from frontend
 CORS(app)
 
-@app.route('/api/veh_count', methods=['GET'])
-def get_veh_count():
-    """Get veh count data"""
-    df = read_data()
-    veh_count = calculate_veh_count(df,2023)
-    
-    # Map vehicle codes to names
-    veh_name_map = {
-        'LF1': 'Helicopter based out of Bangor',
-        'LF2': 'Helicopter based out of Lewiston',
-        'LF3': 'Airplane based out of Bangor',
-        'LF4': 'Helicopter based out of Sanford'
-    }
-    
-    # Transform data to include vehicle names
-    for item in veh_count:
-        veh_code = item['id']
-        if veh_code in veh_name_map:
-            item['id'] = f"{veh_name_map[veh_code]} ({veh_code})"
-    
-    return jsonify({
-        'status': 'success',
-        'message': 'Veh count data fetched successfully',
-        'data': veh_count
-    })
-
 # ======== dashboard page =========
-@app.route('/api/heatmap',methods=['GET'])
-def get_heatmap():
-    """Get heatmap visualization"""
-    df = read_data()
-    map_obj = generate_city_demand_heatmap(df)
-    html_map = map_to_html(map_obj)
-
-    return html_map
 
 @app.route('/api/indicators', methods=['GET'])
 def get_indicators():
     """Get indicator data"""
     df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'data', '4_kpi_dashboard', 'merge_oasis_master_202408.csv'))
-    # 1 total missions
+    # total missions count
     total_missions = df['yearwithrc'].nunique()
     total_missions_formatted = f"{total_missions:,}" 
-    # 2 Total Cities Covered
+    # total cities covered
     total_cities_covered = df['PU City'].nunique()
-    # 3 Monthly Average Response Time
-    mart_str = calculate_response_time(df,2024,8)
-    # 4 Yearly Average Response Time
-    yart_str = calculate_response_time(df,2024)
-    
-    def extract_minutes_seconds(timedelta_str):
-        if timedelta_str == "N/A":
-            return "N/A"
-        try:
-            td = pd.Timedelta(timedelta_str)
-            total_seconds = int(td.total_seconds())
-            minutes = total_seconds // 60
-            seconds = total_seconds % 60
-            return f"{minutes} min {seconds} sec"
-        except:
-            return "N/A"
-    
-    mart = extract_minutes_seconds(mart_str)
-    yart = extract_minutes_seconds(yart_str)
     
     return jsonify({
         'status': 'success',
@@ -107,8 +39,6 @@ def get_indicators():
         'data': {
             'total_missions': total_missions_formatted,
             'total_cities_covered': total_cities_covered,
-            'mart': mart,
-            'yart': yart
         }
     })
 
@@ -121,7 +51,7 @@ def get_24hour_distribution():
     df['disptime_dt'] = pd.to_datetime(df['disptime'], errors='coerce', format='%m/%d/%Y %H:%M:%S')
     df['Hour'] = df['disptime_dt'].dt.hour
     df['Weekday'] = df['disptime_dt'].dt.dayofweek  # 0=Monday, 6=Sunday
-    df['Date'] = df['disptime_dt'].dt.date  # 提取日期用于计算每天平均
+    df['Date'] = df['disptime_dt'].dt.date  # extract date to calculate daily average  
     
     df['response_time_seconds'] = get_time_diff_seconds(df, 'disptime', 'enrtime')
     df['response_time'] = df['response_time_seconds'] / 60.0 
@@ -133,30 +63,30 @@ def get_24hour_distribution():
         (df['response_time'] < 500) 
     ].copy()
     
-    # 24小时任务量分布（按小时）
+    # 24-hour mission distribution by hour
     count_df = df.groupby('Hour').size().reset_index(name='count')
     
-    # 一周任务量分布（按星期几，计算每天平均任务数）
-    # 首先计算每个星期几的总任务数和出现的天数
+    # weekly mission distribution by weekday, calculate average missions per day
+    # first calculate total missions and number of days for each weekday
     weekday_stats = df.groupby('Weekday').agg({
-        'Date': 'nunique',  # 该星期几出现的不同日期数
-        'disptime_dt': 'count'  # 该星期几的总任务数
+        'Date': 'nunique',  # number of unique dates for this weekday
+        'disptime_dt': 'count'  # total missions for this weekday
     }).reset_index()
     weekday_stats.columns = ['Weekday', 'day_count', 'total_count']
-    weekday_stats['count'] = (weekday_stats['total_count'] / weekday_stats['day_count']).round(2)  # 每天平均任务数
+    weekday_stats['count'] = (weekday_stats['total_count'] / weekday_stats['day_count']).round(2)  # average missions per day
     
-    # 星期几名称映射（0=Monday, 6=Sunday）
+    # weekday name mapping (0=Monday, 6=Sunday)
     weekday_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
     weekday_stats['WeekdayName'] = weekday_stats['Weekday'].apply(lambda x: weekday_names[int(x)])
     
-    # 确保所有7天都在结果中
+    # make sure all 7 days are in the result
     all_weekdays = pd.DataFrame({
         'Weekday': range(7),
         'WeekdayName': weekday_names
     })
     weekday_df = all_weekdays.merge(weekday_stats[['Weekday', 'count']], on='Weekday', how='left').fillna(0)
     
-    # 计算响应时间的统计信息：平均值、标准差
+    # calculate response time stats: mean and std
     response_time_stats = df.groupby('Hour')['response_time'].agg([
         ('mean', 'mean'),
         ('std', 'std')
@@ -166,15 +96,15 @@ def get_24hour_distribution():
     count_df = all_hours.merge(count_df, on='Hour', how='left').fillna(0)
     response_time_df = all_hours.merge(response_time_stats, on='Hour', how='left').fillna(0)
     
-    # 计算上下限：mean ± std
+    # calculate upper and lower bounds: mean ± std
     response_time_df['response_time'] = response_time_df['mean'].round(2)
     response_time_df['std'] = response_time_df['std'].fillna(0).round(2)
     response_time_df['upper'] = (response_time_df['mean'] + response_time_df['std']).round(2)
     response_time_df['lower'] = (response_time_df['mean'] - response_time_df['std']).round(2)
-    # 确保下限不为负数
+    # make sure lower bound is not negative
     response_time_df['lower'] = response_time_df['lower'].clip(lower=0)
     
-    # 转换数据类型
+    # convert data types
     count_df['Hour'] = count_df['Hour'].astype(int)
     count_df['count'] = count_df['count'].astype(int)
     weekday_df['Weekday'] = weekday_df['Weekday'].astype(int)
@@ -491,14 +421,14 @@ def get_master_response_time():
     # atstime: vehicle arrival time at scene
     df = df[['enrtime', 'atstime','PU State','PU City','TASC Primary Asset ']]
     df = df[df['PU State'] == 'Maine']
-    # 只留有10个样本以上的城市：
+    # only keep cities with more than 30 samples
     df = df[df['PU City'].isin(df['PU City'].value_counts().index[df['PU City'].value_counts() > 30])]
     df['time_diff_seconds'] = get_time_diff_seconds(df, 'enrtime', 'atstime')
 
     df['time_diff_minutes'] = (df['time_diff_seconds'] / 60).round(3)
     # df['time_diff_hours'] = (df['time_diff_minutes'] / 3600).round(3)
 
-    #clean
+    # clean data
     df = df[(df['time_diff_seconds']>0) & (df['time_diff_minutes']<400)]
     df = df[df['TASC Primary Asset '].notna()]
     print(df['time_diff_minutes'].describe())
@@ -518,390 +448,6 @@ def get_master_response_time():
         'data': data
     })
 
-@app.route('/api/hourly_departure', methods=['GET'])
-def get_hourly_departure():
-    """Get hourly departure density data"""
-    
-    df = read_data()
-    df['tdate'] = pd.to_datetime(df['tdate'], errors='coerce')
-    df['Year'] = df['tdate'].dt.year
-    df = df[df['Year'] == 2023]
-
-    df['enrtime_dt'] = pd.to_datetime(df['enrtime'], errors='coerce').dt.time
-    df.dropna(subset=['enrtime_dt'], inplace=True)
-    df['enr_hour'] = pd.to_datetime(df['enrtime_dt'].astype(str)).dt.hour
-    
-    def get_season(month):
-        if month in [3, 4, 5]:
-            return 'Spring'
-        elif month in [6, 7, 8]:
-            return 'Summer'
-        elif month in [9, 10, 11]:
-            return 'Autumn'
-        else:
-            return 'Winter'
-    
-    df['tdate'] = pd.to_datetime(df['tdate'], errors='coerce')
-    df['season'] = df['tdate'].dt.month.apply(get_season)
-    
-    all_hours = list(range(24))
-    
-    overall_counts = df['enr_hour'].value_counts().sort_index()
-    overall_density = overall_counts / overall_counts.sum()
-    
-    overall_data = []
-    for hour in all_hours:
-        count = int(overall_counts.get(hour, 0))
-        density = float(overall_density.get(hour, 0))
-        overall_data.append({
-            'hour': hour,
-            'count': count,
-            'density': density
-        })
-    
-    
-    season_data = {}
-    for season in ['Spring', 'Summer', 'Autumn', 'Winter']:
-        season_df = df[df['season'] == season]
-        season_counts = season_df['enr_hour'].value_counts().sort_index()
-        season_density = season_counts / season_counts.sum()
-        
-        season_hourly = []
-        for hour in all_hours:
-            count = int(season_counts.get(hour, 0))
-            density = float(season_density.get(hour, 0))
-            season_hourly.append({
-                'hour': hour,
-                'count': count,
-                'density': density
-            })
-        season_data[season] = season_hourly
-    
-    return jsonify({
-        'status': 'success',
-        'data': {
-            'overall': overall_data,
-            'by_season': season_data
-        }
-    })
-
-
-
-@app.route('/api/demographics_elasticity', methods=['GET'])
-def get_demographics_elasticity_api():
-    try:
-        year = int(request.args.get('year', 2023))
-        start_year = request.args.get('start_year_for_growth', None)
-        end_year = request.args.get('end_year_for_growth', None)
-        independent_vars_str = request.args.get('independent_vars', 'pct_65plus,growth_rate')
-        
-        if start_year:
-            start_year = int(start_year)
-        if end_year:
-            end_year = int(end_year)
-        
-        independent_vars = [v.strip() for v in independent_vars_str.split(',')]
-        
-        if year < 2012 or year > 2023:
-            return jsonify({
-                'status': 'error',
-                'message': 'Year must be between 2012 and 2023'
-            }), 400
-        
-        result = get_demographics_elasticity(
-            year=year,
-            start_year_for_growth=start_year,
-            end_year_for_growth=end_year,
-            independent_vars=independent_vars
-        )
-        
-        return jsonify({
-            'status': 'success',
-            'data': result
-        })
-        
-    except ValueError as e:
-        return jsonify({
-            'status': 'error',
-            'message': f'Invalid parameter: {str(e)}'
-        }), 400
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': f'Failed to get demographics elasticity data: {str(e)}'
-        }), 500
-
-@app.route('/api/event_impact', methods=['GET'])
-def get_event_impact_api():
-    try:
-        event_id = request.args.get('event_id', None)
-        
-        if not event_id:
-            return jsonify({
-                'status': 'error',
-                'message': 'event_id is required'
-            }), 400
-        
-        location_level = request.args.get('location_level', 'county')
-        location_value = request.args.get('location_value', None)
-        window_months = int(request.args.get('window_months', 12))
-        
-        if location_level not in ['county', 'city', 'system']:
-            return jsonify({
-                'status': 'error',
-                'message': 'location_level must be county, city, or system'
-            }), 400
-        
-        if window_months < 1 or window_months > 24:
-            return jsonify({
-                'status': 'error',
-                'message': 'window_months must be between 1 and 24'
-            }), 400
-        
-        result = get_event_impact_analysis(
-            event_id=event_id,
-            location_level=location_level,
-            location_value=location_value,
-            window_months=window_months
-        )
-        
-        return jsonify({
-            'status': 'success',
-            'data': result
-        })
-        
-    except ValueError as e:
-        return jsonify({
-            'status': 'error',
-            'message': f'Invalid parameter: {str(e)}'
-        }), 400
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': f'Failed to get event impact data: {str(e)}'
-        }), 500
-
-
-@app.route('/api/events', methods=['GET'])
-def get_events_api():
-    try:
-        events = get_all_events()
-        return jsonify({
-            'status': 'success',
-            'data': events
-        })
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': f'Failed to get events: {str(e)}'
-        }), 500
-
-@app.route('/api/scenario_simulate', methods=['POST'])
-def simulate_scenario_api():
-    try:
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({
-                'status': 'error',
-                'message': 'Request body is required'
-            }), 400
-        
-        fleet_size = int(data.get('fleet_size', 3))
-        crews_per_vehicle = int(data.get('crews_per_vehicle', 2))
-        base_locations = data.get('base_locations', ['BANGOR'])
-        missions_per_vehicle_per_day = int(data.get('missions_per_vehicle_per_day', 3))
-        service_radius_miles = float(data.get('service_radius_miles', 50.0))
-        sla_target_minutes = int(data.get('sla_target_minutes', 20))
-        base_operational_cost_per_year = float(data.get('base_operational_cost_per_year', 500000.0))
-        vehicle_cost_per_year = float(data.get('vehicle_cost_per_year', 100000.0))
-        crew_cost_per_year = float(data.get('crew_cost_per_year', 80000.0))
-        
-        if fleet_size < 1 or fleet_size > 20:
-            return jsonify({
-                'status': 'error',
-                'message': 'fleet_size must be between 1 and 20'
-            }), 400
-        
-        if crews_per_vehicle < 1 or crews_per_vehicle > 5:
-            return jsonify({
-                'status': 'error',
-                'message': 'crews_per_vehicle must be between 1 and 5'
-            }), 400
-        
-        if service_radius_miles < 10 or service_radius_miles > 200:
-            return jsonify({
-                'status': 'error',
-                'message': 'service_radius_miles must be between 10 and 200'
-            }), 400
-        
-        if sla_target_minutes < 5 or sla_target_minutes > 60:
-            return jsonify({
-                'status': 'error',
-                'message': 'sla_target_minutes must be between 5 and 60'
-            }), 400
-        
-        result = simulate_scenario(
-            fleet_size=fleet_size,
-            missions_per_vehicle_per_day=missions_per_vehicle_per_day,
-            crews_per_vehicle=crews_per_vehicle,
-            base_locations=base_locations,
-            service_radius_miles=service_radius_miles,
-            sla_target_minutes=sla_target_minutes,
-            base_operational_cost_per_year=base_operational_cost_per_year,
-            vehicle_cost_per_year=vehicle_cost_per_year,
-            crew_cost_per_year=crew_cost_per_year
-        )
-        
-        return jsonify({
-            'status': 'success',
-            'data': result
-        })
-        
-    except ValueError as e:
-        return jsonify({
-            'status': 'error',
-            'message': f'Invalid parameter: {str(e)}'
-        }), 400
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': f'Failed to simulate scenario: {str(e)}'
-        }), 500
-
-
-@app.route('/api/boxplot', methods=['GET'])
-def get_boxplot_api():
-    try:
-        result = get_boxplot()
-        return jsonify({
-            'status': 'success',
-            'data': result
-        })
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': f'Failed to get boxplot: {str(e)}'
-        }), 500
-
-@app.route('/api/base_locations', methods=['GET'])
-def get_base_locations_api():
-    try:
-        bases = get_base_locations()
-        return jsonify({
-            'status': 'success',
-            'data': bases
-        })
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': f'Failed to get base locations: {str(e)}'
-        }), 500
-
-
-@app.route('/api/scenario_compare', methods=['POST'])
-def compare_scenarios_api():
-    try:
-        data = request.get_json()
-        
-        if not data or 'scenarios' not in data:
-            return jsonify({
-                'status': 'error',
-                'message': 'scenarios array is required'
-            }), 400
-        
-        scenarios_list = data['scenarios']
-        
-        if len(scenarios_list) < 1:
-            return jsonify({
-                'status': 'error',
-                'message': 'At least one scenario is required'
-            }), 400
-        
-        simulated_scenarios = []
-        for scenario_params in scenarios_list:
-            result = simulate_scenario(
-                fleet_size=int(scenario_params.get('fleet_size', 3)),
-                missions_per_vehicle_per_day=int(scenario_params.get('missions_per_vehicle_per_day', 3)),
-                crews_per_vehicle=int(scenario_params.get('crews_per_vehicle', 2)),
-                base_locations=scenario_params.get('base_locations', ['BANGOR']),
-                service_radius_miles=float(scenario_params.get('service_radius_miles', 50.0)),
-                sla_target_minutes=int(scenario_params.get('sla_target_minutes', 20)),
-                base_operational_cost_per_year=float(scenario_params.get('base_operational_cost_per_year', 500000.0)),
-                vehicle_cost_per_year=float(scenario_params.get('vehicle_cost_per_year', 100000.0)),
-                crew_cost_per_year=float(scenario_params.get('crew_cost_per_year', 80000.0))
-            )
-            simulated_scenarios.append(result)
-        
-        # Compare scenarios
-        comparison = compare_scenarios(simulated_scenarios)
-        
-        return jsonify({
-            'status': 'success',
-            'data': {
-                'comparison': comparison,
-                'scenarios': simulated_scenarios
-            }
-        })
-        
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': f'Failed to compare scenarios: {str(e)}'
-        }), 500
-
-@app.route('/api/pareto_sensitivity', methods=['GET', 'POST'])
-def get_pareto_sensitivity_api():
-    try:
-        if request.method == 'POST':
-            data = request.get_json() or {}
-        else:
-            data = request.args.to_dict()
-        
-        base_locations = data.get('base_locations', ['BANGOR', 'PORTLAND'])
-        if isinstance(base_locations, str):
-            base_locations = [b.strip() for b in base_locations.split(',')]
-        
-        radius_min = float(data.get('radius_min', 20))
-        radius_max = float(data.get('radius_max', 100))
-        radius_step = float(data.get('radius_step', 10))
-        sla_min = int(data.get('sla_min', 10))
-        sla_max = int(data.get('sla_max', 30))
-        sla_step = int(data.get('sla_step', 5))
-        fleet_size = int(data.get('fleet_size', 3))
-        crews_per_vehicle = int(data.get('crews_per_vehicle', 2))
-        missions_per_vehicle_per_day = int(data.get('missions_per_vehicle_per_day', 3))
-        
-        weights = data.get('weights')
-        if isinstance(weights, dict):
-            total = sum(weights.values())
-            if total > 0:
-                weights = {k: v / total for k, v in weights.items()}
-        
-        result = get_pareto_sensitivity_analysis(
-            base_locations=base_locations,
-            radius_min=radius_min,
-            radius_max=radius_max,
-            radius_step=radius_step,
-            sla_min=sla_min,
-            sla_max=sla_max,
-            sla_step=sla_step,
-            fleet_size=fleet_size,
-            crews_per_vehicle=crews_per_vehicle,
-            missions_per_vehicle_per_day=missions_per_vehicle_per_day,
-            weights=weights
-        )
-        
-        return jsonify({
-            'status': 'success',
-            'data': result
-        })
-        
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': f'Failed to get Pareto sensitivity analysis: {str(e)}'
-        }), 500
 
 # ======== scenario modeling page - range map =========
 @app.route('/api/get_range_map', methods=['GET'])
@@ -914,7 +460,7 @@ def get_range_map_api():
             base_value = ['BANGOR', 'PORTLAND']  # Default
         
         radius = request.args.get('radius', 50.0, type=float)
-        expected_time = request.args.get('expectedTime', 20.0, type=float)  # 注意前端传的是 expectedTime
+        expected_time = request.args.get('expectedTime', 20.0, type=float)  # note: frontend sends expectedTime
         
         from utils.scenario.get_range_map import (
             get_range_map_data, 
@@ -989,22 +535,22 @@ def get_special_base_statistics():
         center_type = request.args.get('centerType')
         radius = request.args.get('radius', 50.0, type=float)
         expected_time = request.args.get('expectedTime', 20.0, type=float)
-        base_cities_input = request.args.get('baseCities', None)  #包含默认城市，comma-separated cities
+        base_cities_input = request.args.get('baseCities', None)  # comma-separated cities, includes default cities
         
-        # Parse and validate cities on backend
+        # parse and validate cities on backend
         valid_cities = []
         if base_cities_input:
             from utils.heatmap import get_city_coordinates
             city_coords = get_city_coordinates(isOnlyMaine=True)
             city_coords_set = set(city.upper().strip() for city in city_coords.keys())
             
-            # Parse comma-separated cities
+            # parse comma-separated cities
             cities = base_cities_input.split(',')
             for city in cities:
                 normalized = city.strip().upper()
                 if normalized and normalized in city_coords_set:
                     valid_cities.append(normalized)
-            # 新的城市，是列表里所有的城市（去重）
+            # new cities list, all cities deduplicated
             valid_cities = list(set(valid_cities))
         
         if not center_type:
@@ -1015,7 +561,6 @@ def get_special_base_statistics():
         
         from utils.scenario.get_special_base_stats import (
             calculate_special_base_statistics,
-            get_special_base_data
         )
         from utils.scenario.get_range_map import get_range_map_data
         from utils.heatmap import get_city_coordinates
@@ -1071,205 +616,35 @@ def get_special_base_statistics():
         }), 500
     
 
-@app.route('/api/base_siting', methods=['POST'])
-def get_base_siting_api():
-    try:
-        data = request.get_json() or {}
-        
-        existing_bases = data.get('existing_bases', ['BANGOR'])
-        candidate_base = data.get('candidate_base')
-        service_radius_miles = float(data.get('service_radius_miles', 50.0))
-        sla_target_minutes = int(data.get('sla_target_minutes', 20))
-        fleet_size = int(data.get('fleet_size', 3))
-        crews_per_vehicle = int(data.get('crews_per_vehicle', 2))
-        missions_per_vehicle_per_day = int(data.get('missions_per_vehicle_per_day', 3))
-        coverage_threshold_minutes = int(data.get('coverage_threshold_minutes', 20))
-        
-        result = get_base_siting_analysis(
-            existing_bases=existing_bases,
-            candidate_base=candidate_base,
-            service_radius_miles=service_radius_miles,
-            sla_target_minutes=sla_target_minutes,
-            fleet_size=fleet_size,
-            crews_per_vehicle=crews_per_vehicle,
-            missions_per_vehicle_per_day=missions_per_vehicle_per_day,
-            coverage_threshold_minutes=coverage_threshold_minutes
-        )
-        
-        return jsonify({
-            'status': 'success',
-            'data': result
-        })
-        
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': f'Failed to get base siting analysis: {str(e)}'
-        }), 500
-
-@app.route('/api/weather_risk', methods=['GET'])
-def get_weather_risk_api():
-    try:
-        method = request.args.get('method', 'precipitation')
-        aggregation_level = request.args.get('aggregation_level', 'day')
-        
-        if method not in ['precipitation', 'temperature', 'combined']:
-            return jsonify({
-                'status': 'error',
-                'message': 'method must be precipitation, temperature, or combined'
-            }), 400
-        
-        if aggregation_level not in ['day', 'month', 'week']:
-            return jsonify({
-                'status': 'error',
-                'message': 'aggregation_level must be day, month, or week'
-            }), 400
-        
-        result = get_weather_risk_analysis(
-            method=method,
-            aggregation_level=aggregation_level
-        )
-        
-        return jsonify({
-            'status': 'success',
-            'data': result
-        })
-        
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': f'Failed to get weather risk data: {str(e)}'
-        }), 500
-
-@app.route('/api/kpi_bullets', methods=['GET'])
-def get_kpi_bullets_api():
-    try:
-        year = int(request.args.get('year', 2023))
-        sla_target_minutes = int(request.args.get('sla_target_minutes', 20))
-        include_historical = request.args.get('include_historical', 'true').lower() == 'true'
-        
-        result = get_kpi_bullets(
-            year=year,
-            sla_target_minutes=sla_target_minutes,
-            include_historical=include_historical
-        )
-        
-        return jsonify({
-            'status': 'success',
-            'data': result
-        })
-        
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': f'Failed to get KPI bullets: {str(e)}'
-        }), 500
-
-@app.route('/api/trend_wall', methods=['GET'])
-def get_trend_wall_api():
-    try:
-        current_year = int(request.args.get('current_year', 2023))
-        current_month = request.args.get('current_month')
-        current_month = int(current_month) if current_month else None
-        forecast_months = int(request.args.get('forecast_months', 6))
-        
-        result = get_trend_wall_data(
-            current_year=current_year,
-            current_month=current_month,
-            forecast_months=forecast_months
-        )
-        
-        return jsonify({
-            'status': 'success',
-            'data': result
-        })
-        
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': f'Failed to get trend wall data: {str(e)}'
-        }), 500
-
-@app.route('/api/cost_benefit_throughput', methods=['GET'])
-def get_cost_benefit_throughput_api():
-    try:
-        start_year = int(request.args.get('start_year', 2020))
-        end_year = int(request.args.get('end_year', 2023))
-        aggregation = request.args.get('aggregation', 'month')
-        
-        result = get_cost_benefit_throughput_data(
-            start_year=start_year,
-            end_year=end_year,
-            aggregation=aggregation
-        )
-        
-        return jsonify({
-            'status': 'success',
-            'data': result
-        })
-        
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': f'Failed to get cost-benefit-throughput data: {str(e)}'
-        }), 500
-
-@app.route('/api/safety_spc', methods=['GET'])
-def get_safety_spc_api():
-    try:
-        start_year = int(request.args.get('start_year', 2020))
-        end_year = int(request.args.get('end_year', 2023))
-        aggregation = request.args.get('aggregation', 'month')
-        method = request.args.get('method', '3sigma')
-        
-        result = get_safety_spc_data(
-            start_year=start_year,
-            end_year=end_year,
-            aggregation=aggregation,
-            method=method
-        )
-        
-        return jsonify({
-            'status': 'success',
-            'data': result
-        })
-        
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': f'Failed to get safety SPC data: {str(e)}'
-        }), 500
-    
-
-@app.route('/api/test', methods=['GET'])
-def get_test_api():
+@app.route('/api/dashboard_info', methods=['GET'])
+def get_dashboard_info():
     try:
         df = pd.read_csv(os.path.join(os.path.dirname(__file__), 'data', '4_kpi_dashboard', 'merge_oasis_master_202408.csv'))
         print(df['Add Date'].head())
         df['Add Date'] = pd.to_datetime(df['Add Date'])
         df['Year'] = df['Add Date'].dt.year
         df['Month'] = df['Add Date'].dt.month
-        # rename
+        # rename columns
         df.rename(columns={'responseDelay (Subjective and with no objective time for them to decide, none or select reason, just gustalt)':'responseDelay'},inplace=True)
         df.rename(columns={'transportByPrimaryQ (Did the appropriate asset transport the patient without delay)':'transportByPrimaryQ'},inplace=True)
         df.rename(columns={'appropriateAsset (Who should have gone if available)':'appropriateAsset'},inplace=True)
         df.rename(columns={'reasonL1NoResponse (L1 is Bangor RotorWing, L2 is Lewiston RW, L3 is Bangor FixedWing, L4 is Sanford RW) ':'reasonL1NoResponse'},inplace=True)
         
-        # 创建 base 字段（实际出任务的基地）
+        # create base field (actual base that handled the mission)
         df['base'] = df['airUnit'].fillna(df['groundUnit'])
         
         df['responseDelay'] = df['responseDelay'].fillna('')
         df['delay_list'] = df['responseDelay'].str.split('|')
         
-        # 处理 respondingAssets，将用 | 分隔的值拆分成列表
+        # process respondingAssets, split pipe-separated values into list
         # df['respondingAssets'] = df['respondingAssets'].fillna('')
         df['respondingAssets_list'] = df['airUnit'].fillna(df['groundUnit'])
         
         df = df.replace({np.nan: None, pd.NA: None, pd.NaT: None})
 
-        # 先展开 respondingAssets_list
+        # first explode respondingAssets_list
         df_exp = df.explode('respondingAssets_list')
-        # 再展开 delay_list
+        # then explode delay_list
         df_exp = df_exp.explode('delay_list')
         # df_exp = df_exp[(df_exp['delay_list'] != '')&(df_exp['delay_list']!='noDelays')]
         delay_reason_counts = (
@@ -1281,40 +656,40 @@ def get_test_api():
         print(delay_reason_counts.head())
         df_delay_reason = df_exp.groupby(['delay_list','respondingAssets_list']).size().reset_index(name='count')
         delayData = df_exp.groupby(['respondingAssets_list','transportByPrimaryQ']).size().reset_index(name='count')
-        # 重命名字段以匹配前端期望
+        # rename columns to match frontend expectations
         delayData.rename(columns={'respondingAssets_list': 'respondingAssets'}, inplace=True)
         df_delay_reason.rename(columns={'respondingAssets_list': 'respondingAssets'}, inplace=True)
 
 
-        # 统计每个基地为appropriateAsset但是最终不为base的数量（没有如期完成的数量）
+        # count missions where appropriateAsset != base (not completed as expected)
         df_base_count = df.groupby(['appropriateAsset','base']).size().reset_index(name='count')
         df_base_count = df_base_count[df_base_count['appropriateAsset'] != df_base_count['base']]
         
-        # 计算每个基地的预期任务总数（按 appropriateAsset 分组）
+        # calculate total expected missions per base (grouped by appropriateAsset)
         df_expected_total = df.groupby(['appropriateAsset']).size().reset_index(name='total_count')
         
-        # 计算每个基地按预期完成的数量（appropriateAsset == base）
+        # calculate missions completed as expected (appropriateAsset == base)
         df_completed_as_expected = df[df['appropriateAsset'] == df['base']].groupby(['appropriateAsset']).size().reset_index(name='completed_count')
         
-        # 合并数据
+        # merge data
         df_expected_stats = df_expected_total.merge(
             df_completed_as_expected, 
             on='appropriateAsset', 
             how='left'
         ).fillna(0)
         
-        # 确保 completed_count 是整数
+        # make sure completed_count is integer
         df_expected_stats['completed_count'] = df_expected_stats['completed_count'].astype(int)
         df_expected_stats['total_count'] = df_expected_stats['total_count'].astype(int)
         
         print("Expected stats:")
         print(df_expected_stats.head())
         
-        # 统计各基地没有响应的原因
+        # count no-response reasons for each base
         no_response_fields = ['reasonL1NoResponse', 'reasonL2NoResponse', 'reasonL3NoResponse', 'reasonL4NoResponse2']
         base_no_response_reasons = {}
         
-        # 字段到基地名称的映射
+        # field to base name mapping
         field_to_base = {
             'reasonL1NoResponse': 'LF1',
             'reasonL2NoResponse': 'LF2',
@@ -1323,18 +698,18 @@ def get_test_api():
         }
         
         for field in no_response_fields:
-            # 检查字段是否存在
+            # check if field exists
             if field not in df.columns:
                 print(f"Warning: Field {field} not found in dataframe")
                 continue
                 
-            # 获取基地名称
+            # get base name
             base_name = field_to_base.get(field, 'Unknown')
             
-            # 填充空值
+            # fill empty values
             df[field] = df[field].fillna('')
             
-            # 拆分用 | 分隔的原因
+            # split pipe-separated reasons
             df_field_expanded = df[df[field] != ''].copy()
             
             if len(df_field_expanded) == 0:
@@ -1344,17 +719,17 @@ def get_test_api():
             df_field_expanded['reason_list'] = df_field_expanded[field].str.split('|')
             df_field_expanded = df_field_expanded.explode('reason_list')
             
-            # 去除原因前面的基地编号（如 1tasked -> tasked, 2oosMedic -> oosMedic）
+            # remove base number prefix from reasons (e.g., 1tasked -> tasked, 2oosMedic -> oosMedic)
             df_field_expanded['reason_clean'] = df_field_expanded['reason_list'].str.replace(r'^[1-4]', '', regex=True)
             df_field_expanded['reason_clean'] = df_field_expanded['reason_clean'].str.strip()
             
-            # 过滤空值
+            # filter out empty values
             df_field_expanded = df_field_expanded[df_field_expanded['reason_clean'] != '']
             
             if len(df_field_expanded) == 0:
                 continue
             
-            # 统计原因数量
+            # count reasons
             reason_counts = df_field_expanded['reason_clean'].value_counts().reset_index()
             reason_counts.columns = ['reason', 'count']
             reason_counts['base'] = base_name
@@ -1363,7 +738,7 @@ def get_test_api():
                 base_no_response_reasons[base_name] = []
             base_no_response_reasons[base_name] = reason_counts.to_dict(orient='records')
         
-        # 转换为列表格式便于前端处理
+        # convert to list format for frontend
         no_response_data = []
         for base, reasons in base_no_response_reasons.items():
             no_response_data.extend(reasons)

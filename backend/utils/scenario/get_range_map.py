@@ -1,16 +1,14 @@
 """
 Generate range map with heatmap and service radius circles.
 """
-import folium
 import json
 import os
-from folium.plugins import HeatMap
 import pandas as pd
 import numpy as np
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional, Any
 from math import radians, sin, cos, sqrt, atan2
-from utils.heatmap import get_city_coordinates, process_city_demand, map_to_html, create_heatmap
+from utils.heatmap import get_city_coordinates, process_city_demand
 from utils.getData import read_data
 from utils.scenario.get_time_diff import get_time_diff_seconds, clean_time
 
@@ -286,84 +284,4 @@ def get_range_map_data(
         'heatmap_data': heatmap_data,
         'base_locations': base_locations
     }
-
-
-def generate_range_map(
-    base_names: List[str],
-    radius_miles: float,
-    expected_time: float,
-    center_type: Optional[str] = None
-) -> str:
-    """
-    Generate map with heatmap and service radius circles.
-    
-    Args:
-        base_names: List of base city names
-        radius_miles: Service radius in miles
-        
-    Returns:
-        HTML string of the map
-    """
-    # Load data for heatmap
-    df = read_data('FlightTransportsMaster.csv')
-    df = df[df['PU State'] == 'Maine']
-    if center_type:
-        df = df[df['TASC Primary Asset '] == center_type]
-    
-    # Get city coordinates
-    city_coords = get_city_coordinates(isOnlyMaine=True)
-    
-    # Process city demand for heatmap
-    city_demand = process_city_demand(df, city_coords, isOnlyMaine=True)
-    
-    # Get base locations
-    base_locations = get_base_coordinates(base_names)
-    
-    # Calculate center from base locations or city demand
-    if len(base_locations) > 0:
-        center_lat = sum(b['latitude'] for b in base_locations) / len(base_locations)
-        center_lon = sum(b['longitude'] for b in base_locations) / len(base_locations)
-    elif len(city_demand) > 0:
-        center_lat = city_demand['latitude'].mean()
-        center_lon = city_demand['longitude'].mean()
-    else:
-        center_lat = 44.5
-        center_lon = -69.0
-    
-
-    if len(city_demand) > 0:
-        m = create_heatmap(city_demand, center_lat=center_lat, center_lon=center_lon, zoom_start=7, radius=15)
-    else:
-        m = folium.Map(
-            location=[center_lat, center_lon],
-            zoom_start=7,
-            tiles='OpenStreetMap'
-        )
-    
-    # Add base markers and circles
-    for base in base_locations:
-        # Add marker
-        folium.Marker(
-            location=[base['latitude'], base['longitude']],
-            popup=f"<b>{base['name']}</b><br>Service Radius: {radius_miles} miles",
-            icon=folium.Icon(color='red', icon='home', prefix='fa')
-        ).add_to(m)
-        
-        # Add service radius circle
-        folium.Circle(
-            location=[base['latitude'], base['longitude']],
-            radius=radius_miles * 1609.34,  # Convert miles to meters
-            popup=f"{base['name']} - {radius_miles} mile radius",
-            color='blue',
-            fill=True,
-            fillColor='blue',
-            fillOpacity=0.1,
-            weight=2
-        ).add_to(m)
-    
-    # Add layer control
-    folium.LayerControl(collapsed=False).add_to(m)
-    
-    # Convert to HTML
-    return map_to_html(m)
 

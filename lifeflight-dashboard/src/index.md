@@ -34,13 +34,7 @@ Last data date: 2024.08
     <h2>📍 Cities Served</h2>
     <span class="big">${indicatorData?.data?.total_cities_covered}</span>
   </div>
-  <!-- <div class="card">
-    <h2>⏱️ Response Time <span class="muted"> Monthly average</span></h2>
-    <span class="big">${indicatorData?.data?.mart}</span>
-  </div> -->
 </div>
-<!-- <span style="white-space: nowrap;">
-</span> -->
 
 # Mission Volume and Dispatch Response Time
 
@@ -110,7 +104,7 @@ baseWorkloadPlot(dataBase.data)
 ```js
 let resTest=null
 let data = null
-resTest = await fetch('http://localhost:5001/api/test')
+resTest = await fetch('http://localhost:5001/api/dashboard_info')
 data = await resTest.json()
 ```
 

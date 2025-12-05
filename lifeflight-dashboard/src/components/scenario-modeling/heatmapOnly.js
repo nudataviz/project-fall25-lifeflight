@@ -1,7 +1,6 @@
 import {html} from "npm:htl";
 
 export function heatmapOnly(heatmapData) {
-  // 处理热力图数据点
   const heatmapPoints = heatmapData
     .map(d => {
       const lat = parseFloat(d.latitude);
@@ -13,7 +12,6 @@ export function heatmapOnly(heatmapData) {
   
   const heatmapPointsJson = JSON.stringify(heatmapPoints);
   
-  // 计算地图中心
   let centerLat = 44.5;
   let centerLon = -69.0;
   if (heatmapPoints.length > 0) {
@@ -21,7 +19,6 @@ export function heatmapOnly(heatmapData) {
     centerLon = heatmapPoints.reduce((sum, p) => sum + p[1], 0) / heatmapPoints.length;
   }
   
-  // 创建完整的 HTML 文档
   const mapHtml = `
     <!DOCTYPE html>
     <html>
@@ -44,7 +41,6 @@ export function heatmapOnly(heatmapData) {
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
         
-        // 添加热力图
         const heatmapPoints = ${heatmapPointsJson};
         if (heatmapPoints.length > 0) {
           L.heatLayer(heatmapPoints, {

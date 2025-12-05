@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from typing import Dict, Any
 
-from utils.heatmap import generate_city_demand_heatmap, map_to_html, process_city_demand, get_city_coordinates
+from utils.heatmap import process_city_demand, get_city_coordinates
 
 
 def load_dataset(dataset: str) -> pd.DataFrame:
@@ -80,29 +80,3 @@ def get_heatmap_by_base_data(dataset: str, base_places: str) -> Dict[str, Any]:
     return {
         'heatmap_data': heatmap_data
     }
-
-
-def generate_heatmap_by_base(dataset: str, base_places: str) -> str:
-    """
-    Generate heatmap HTML
-    
-    Args:
-    dataset: dataset name
-    base_places: base places list, comma separated or 'ALL'
-    
-    Returns:
-    HTML string
-    """
-    # Load data
-    df = load_dataset(dataset)
-    
-    # Filter data
-    df = filter_by_base(df, base_places, dataset)
-    
-    # Generate heatmap
-    map_obj = generate_city_demand_heatmap(df, zoom_start=7, radius=15, isOnlyMaine=True)
-    
-    # Convert to HTML
-    html_map = map_to_html(map_obj)
-    
-    return html_map

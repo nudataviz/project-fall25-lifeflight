@@ -114,7 +114,6 @@ export function noResponseReasonPlot(data) {
         },
         inset: 2
       }),
-      // 在单元格中显示百分比文本（如果百分比大于5%）
       Plot.text(heatmapData, {
         x: "base",
         y: "reason",

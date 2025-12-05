@@ -206,7 +206,9 @@ const responseTimeData = response_time.data || []
 ```js
 import {responseTimeChart} from "./components/scenario-modeling/responseTimeChart.js"
 ```
-
+```js
+responseTimeData
+```
 ```js
 responseTimeChart(responseTimeData)
 ```
@@ -216,3 +218,13 @@ This chart examines whether certain cities have longer response times because th
 Cities show clear preferences for specific bases, indicated by the consistent point colors within each city. The rightmost points on each horizontal line highlight missions with the longest en-route times. 
 
 For example, Portland shows several neonatal transports with much longer travel times handled by neoGround, while faster missions were completed by LF3 and LF4. This pattern suggests that neoGround is relatively distant from Portland, indicating potential value in establishing a closer base.
+
+
+<div class='note' label='Presentation Question'>
+Previously, we used <span style=' font-size: 0.95rem; padding: 0.15rem 0.4rem; border-radius: 6px; border: 1px solid #d0d7de; background:white;'> Plot.normalizeX </span> to normalize the data. This made the charts look cleaner and helped us compare patterns within each city. But we later found a problem: the normalized values can’t really be compared across different cities, because each city is normalized based on its own total.
+
+For example, if a city has longer response times (like 20–60 minutes), its normalized values might end up smaller. Another city with shorter response times (like 5–15 minutes) might get larger normalized values.
+So when we sort by the normalized values, a city with longer actual response times could appear earlier, and a city with shorter times could appear later. That doesn’t really make sense.
+
+So we decided to remove normalization and just use the raw response time (in minutes). This way, the sorting correctly matches the actual response times.
+</div>

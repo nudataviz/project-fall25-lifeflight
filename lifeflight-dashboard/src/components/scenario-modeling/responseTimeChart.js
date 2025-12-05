@@ -2,20 +2,19 @@ import * as Plot from "npm:@observablehq/plot";
 
 export function responseTimeChart(data) {
 
-  const xy = Plot.normalizeX("sum", {
-    x: "time_diff_seconds",
+  const xy = {
+    x: "time_diff_minutes",
     y: "PU City",
     z: "PU City"
-  });
+  };
 
   return Plot.plot({
     height: 800,
     marginLeft: 100,
     x: {
       axis: "top",
-      percent: true,
       grid: true,
-      label: "Response Time (normalized)"
+      label: "Response Time (minutes)"
     },
     y: {
       axis: null,

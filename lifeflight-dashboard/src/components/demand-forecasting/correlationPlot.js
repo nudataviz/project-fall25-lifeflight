@@ -49,13 +49,11 @@ export function correlationPlot(correlationData) {
       line: true
     },
     marks: [
-      // 0线
       Plot.ruleY([0], {
         stroke: "#000",
         strokeWidth: 2,
         strokeDasharray: "4,2"
       }),
-      // 条形图 - 正相关用蓝色，负相关用红色
       Plot.barY(sortedData, {
         x: "formattedVariable",
         y: "correlation",
@@ -67,17 +65,6 @@ export function correlationPlot(correlationData) {
           }
         }
       }),
-      // 在条形图上显示数值
-      // Plot.text(sortedData, {
-      //   x: "formattedVariable",
-      //   y: "correlation",
-      //   text: (d) => d.correlation.toFixed(2),
-      //   textAnchor: "middle",
-      //   dy: d => d.correlation >= 0 ? -8 : 8,
-      //   fill: "black",
-      //   fontSize: 11,
-      //   fontWeight: "bold"
-      // })
     ]
   })
 }
