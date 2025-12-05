@@ -4,7 +4,6 @@ An interactive data visualization dashboard for analyzing medical transport serv
 
 # Current Features
 
-- ~~Interactive geographic visualizations using Folium maps.~~
 - Time series forecasting with Prophet for demand prediction.
 - Hour-by-weekday heatmap visualization.
 
