@@ -17,7 +17,7 @@ export function missionDisPlot(data, mode = "hourly") {
     }));
     
     return Plot.plot({
-      title: "本月任务量分布图",
+      title: "Mission Volume Distribution by Weekday - 2024.08",
       width: 1000,
       height: 500,
       y: {grid: true, label: "Average Missions per Day"},
@@ -37,7 +37,7 @@ export function missionDisPlot(data, mode = "hourly") {
     }));
     
     return Plot.plot({
-      title: "本月任务量分布图",
+      title: "Mission Volume Distribution by Hour of Day - 2024.08",
       width: 1000,
       height: 500,
       y: {grid: true, label: "Mission Count"},

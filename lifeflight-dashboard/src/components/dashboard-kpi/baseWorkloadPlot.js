@@ -10,7 +10,7 @@ export function baseWorkloadPlot(data) {
 
   
   return Plot.plot({
-    title: "Base Workload",
+    title: "Base Workload - 2024.08",
     width: 1000,
     height: 500,
     marginLeft: 80,

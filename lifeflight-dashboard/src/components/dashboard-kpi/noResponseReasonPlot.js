@@ -2,7 +2,6 @@ import * as Plot from "npm:@observablehq/plot";
 
 export function noResponseReasonPlot(data) {
 
-  // 过滤空值和无效数据
   const processedData = data.filter(d => 
     d && 
     d.reason && 
@@ -14,10 +13,8 @@ export function noResponseReasonPlot(data) {
   
   if (processedData.length === 0) {
     return Plot.plot({
-      title: "No Response Reasons by Base (2024)",
-      width: 400,
-      height: 400,
-      marginLeft: 200,
+      title: "No Response Reasons by Base - 2024.08",
+      // width: 400,
       marginRight: 20,
       marks: [
         Plot.text(["No valid data available"], {frameAnchor: "middle", fontSize: 16})
@@ -25,7 +22,6 @@ export function noResponseReasonPlot(data) {
     });
   }
   
-  // 按基地分组计算百分比
   const baseGroups = {};
   processedData.forEach(d => {
     const base = d.base;
@@ -35,7 +31,6 @@ export function noResponseReasonPlot(data) {
     baseGroups[base].push(d);
   });
   
-  // 计算每个基地的总数，然后计算百分比
   Object.keys(baseGroups).forEach(base => {
     const total = baseGroups[base].reduce((sum, d) => sum + d.count, 0);
     baseGroups[base].forEach(d => {
@@ -44,10 +39,8 @@ export function noResponseReasonPlot(data) {
     });
   });
   
-  // 展平数据
   const flatData = Object.values(baseGroups).flat();
   
-  // 按总数排序原因（显示最常见的原因）
   const reasonTotals = {};
   flatData.forEach(d => {
     if (!reasonTotals[d.reason]) {
@@ -56,13 +49,11 @@ export function noResponseReasonPlot(data) {
     reasonTotals[d.reason] += d.count;
   });
   
-  // 获取所有唯一的原因和基地
   const allReasons = [...new Set(flatData.map(d => d.reason))].sort((a, b) => 
     (reasonTotals[b] || 0) - (reasonTotals[a] || 0)
   );
   const allBases = [...new Set(flatData.map(d => d.base))].sort();
   
-  // 创建完整的热力图数据（包括0值）
   const heatmapData = [];
   allBases.forEach(base => {
     allReasons.forEach(reason => {
@@ -77,16 +68,13 @@ export function noResponseReasonPlot(data) {
     });
   });
   
-  // 计算颜色范围
   const maxPercentage = Math.max(...heatmapData.map(d => d.percentage));
   
-  // 根据基地数量动态计算宽度，避免右边空白
   const baseCount = allBases.length;
-  // 每个基地约75px（包括单元格和间距），加上左边距200px和右边距20px
   const calculatedWidth = Math.max(400, baseCount * 75 + 200 + 20);
   
   return Plot.plot({
-    title: "No Response Reasons by Base (2024)",
+    title: "No Response Reasons by Base - 2024.08",
     width: calculatedWidth,
     height: 400,
     marginLeft: 200,

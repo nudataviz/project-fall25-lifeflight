@@ -12,7 +12,7 @@ export function delayReasonPlot(data) {
             reason !== "";
   });
   return Plot.plot({
-    title: "Delay Reason",
+    title: "Delay Reason - 2024.08",
     marginLeft: 200,
     height: 400,
     x: {

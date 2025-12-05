@@ -23,7 +23,7 @@ export function delayPlot(data) {
   const processedData = Object.values(grouped);
   
   return Plot.plot({
-    title: "Delay Rate(2024)",
+    title: "Transport by Appropriate Asset Without Delay - 2024.08",
     axis: null,
     label: null,
     height: 400,
