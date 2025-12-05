@@ -12,8 +12,9 @@ title: "Service Coverage: Ground Units"
 <div class="note" label="Data Notes">
 
 - This analysis uses the *FlightTransportsMaster.csv(2021-2024)* as it involves time-based calculations.
-- Ground Units included: B-CCT, L-CCT, S-CCT, neoGround.
 - Ground units’ missions are highly concentrated near their bases. Longer missions, especially for neoGround, result in significantly increased response times. This makes the base location of Ground Units more critical than Air Units, warranting a separate analysis.
+- Ground Units included: B-CCT, L-CCT, S-CCT, neoGround.(B-CCT, L-CCT, and S-CCT are the same type of unit but at different locations. However, considering possible differences in base configuration, they are treated as separate types here.)
+
 </div>
 
 ## Speed Analysis
@@ -25,11 +26,10 @@ const speedsData = await speedsResponse.json()
 const baseSpeeds = speedsData.speeds || {}
 ```
 
-```js
-if(Object.keys(baseSpeeds).length > 0){
-  display(html`<div class="card" style="margin-top: 20px;width: 50%">
+<div class='grid' style='grid-template-columns: 1fr 2fr;'>
+<div class="card" style="margin-top:20px;height: 70%;">
     <h3>Ground Unit Speed Statistics</h3>
-    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+    <table style="width: 100%; border-collapse: collapse;">
       ${Object.entries(baseSpeeds).map(([base, speed]) => {
         return html`<tr>
           <td style="padding: 8px; color: #666;">${base}:</td>
@@ -37,9 +37,14 @@ if(Object.keys(baseSpeeds).length > 0){
         </tr>`;
       })}
     </table>
-  </div>`)
-}
-```
+  </div>
+<div class="note" label="Calculation Notes">
+
+- Speed for each unit is estimated using the median speed of its past missions.
+- Distance between cities is calculated from city coordinates.
+- Service time for each mission is computed as distance ÷ speed.
+</div>
+</div>
 
 ## Select Ground Unit Type
 Choose the Ground Unit type to analyze.
@@ -204,7 +209,17 @@ if(specialBaseStats){
       })}
     </div>
     
-    <div class="card" style="width: 50%">
+    
+  </div>`)
+}
+```
+<!-- <div class="note" label="Metrics">
+
+- Cities Covered: Number of cities within the unit’s service range.
+- Compliance Statistics: Compares the total number of missions in coverage with the number of missions meeting response-time standards.
+</div> -->
+<div class='grid' style='grid-template-columns: 1fr 2fr;'>
+<div class="card" style="height: 70%;margin-top:15px">
       <h4>Compliance Statistics</h4>
       <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
         <tr>
@@ -225,24 +240,13 @@ if(specialBaseStats){
         </tr>
       </table>
     </div>
-  </div>`)
-}
-```
-<div class='grid grid-cols-2'>
 <div class="note" label="Calculation Notes">
 
-- Speed for each unit is estimated using the median speed of its past missions.
-- Distance between cities is calculated from city coordinates.
-- Service time for each mission is computed as distance ÷ speed.
 - Adding a new base recalculates service coverage and arrival times.
 - If coverage areas overlap, the shorter arrival time is used.
 </div>
 
-<div class="note" label="Metrics">
 
-- Cities Covered: Number of cities within the unit’s service range.
-- Compliance Statistics: Compares the total number of missions in coverage with the number of missions meeting response-time standards.
-</div>
 <div>
 
 
