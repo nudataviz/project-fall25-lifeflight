@@ -77,7 +77,7 @@ import {hourlyResTime} from './components/dashboard-kpi/hourlyResTime.js'
 hourlyResTime(dataDis.data.response_time)
 ```
 
-# Base Workload
+# <span style="white-space: nowrap;">Base Workload</span>
 
 <!-- Count of airUnit and groundUnit when "Did LFOM transport patient" is yes -->
 
@@ -96,13 +96,13 @@ baseWorkloadPlot(dataBase.data)
 
 
 
-# Transport by Appropriate Asset Without Delay
+# <span style="white-space: nowrap;">Transport by Appropriate Asset Without Delay</span>
 
-Uses the "Transport by Primary Q" field. A task is marked as "Yes" when both conditions are met: (1) using the expected/appropriate asset, and (2) no delay. Otherwise, it is marked as "No".
+<div style="max-width: 100%; word-wrap: break-word; overflow-wrap: break-word;">Uses the "Transport by Primary Q" field. A task is marked as "Yes" when both conditions are met: (1) using the expected/appropriate asset, and (2) no delay. Otherwise, it is marked as "No".</div>
 
-Delay Rate (2024.08) shows the proportion of tasks completed with "Transport by Primary Q" by each base in 2024.08, evaluating overall performance in completing tasks on time with the expected asset. Delay Reason analyzes the main causes of delays for tasks with delays, identifying time-related bottlenecks.
+<div style="max-width: 100%; word-wrap: break-word; overflow-wrap: break-word;">Delay Rate (2024.08) shows the proportion of tasks completed with "Transport by Primary Q" by each base in 2024.08, evaluating overall performance in completing tasks on time with the expected asset. Delay Reason analyzes the main causes of delays for tasks with delays, identifying time-related bottlenecks.</div>
 
-The analysis of expected completion rates and non-response reasons focuses on whether the most appropriate asset was used, evaluating asset matching and dispatch decision performance, and analyzing main reasons for not responding with the expected asset.
+<div style="max-width: 100%; word-wrap: break-word; overflow-wrap: break-word;">The analysis of expected completion rates and non-response reasons focuses on whether the most appropriate asset was used, evaluating asset matching and dispatch decision performance, and analyzing main reasons for not responding with the expected asset.</div>
 
 
 ```js
@@ -130,11 +130,18 @@ ${delayReasonPlot(data.delayReasonData)}
 
 </div>
 
-# Expected Completion Rate and Non-Response Reasons by Base
+# <span style="white-space: nowrap;">Expected Completion Rate and Non-Response Reasons by Base</span>
 
-This section evaluates base dispatch performance based on whether the most appropriate base executed each task, comparing expected vs. actual execution. The field "appropriateAsset" (Who should have gone if available) indicates the base initially assigned and expected to execute the task; the field "respondingAssets" records the base that actually executed the task.
 
-The chart "Expected Completion Rate by Base (2024.08)" shows the proportion of expected tasks actually completed by the expected base in 2024.08, measuring each base's ability to execute tasks as planned. It also shows the proportion of non-response reasons for LF1-LF4, analyzing factors such as resource occupancy, maintenance, and distance limitations that affect bases' ability to execute tasks as expected.
+<div style="max-width: 100%; word-wrap: break-word; overflow-wrap: break-word;">This section evaluates base dispatch performance based on whether the most appropriate base executed each task, comparing expected vs. actual execution. The field "appropriateAsset" (Who should have gone if available) indicates the base initially assigned and expected to execute the task; the field "respondingAssets" records the base that actually executed the task.</div>
+
+<div style="max-width: 100%; word-wrap: break-word; overflow-wrap: break-word;">The chart "Expected Completion Rate by Base (2024.08)" shows the proportion of expected tasks actually completed by the expected base in 2024.08, measuring each base's ability to execute tasks as planned. It also shows the proportion of non-response reasons for LF1-LF4, analyzing factors such as resource occupancy, maintenance, and distance limitations that affect bases' ability to execute tasks as expected.</div>
+
+
+
+
+
+
 ```js
 import {noResponseReasonPlot} from './components/dashboard-kpi/noResponseReasonPlot.js'
 ```
