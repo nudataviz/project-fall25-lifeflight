@@ -2,13 +2,13 @@ import * as Plot from "npm:@observablehq/plot";
 import * as d3 from "npm:d3";
 
 export function missionDisPlot(data, mode = "hourly") {
-  // mode: "hourly" 或 "weekday"
+  // mode: "hourly" or "weekday"
   const marks = [
     Plot.ruleY([0]),
   ];
   
   if (mode === "weekday") {
-    // 一周分布：按星期几
+
     const weekdayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     marks.push(Plot.barY(data, {
       x: "WeekdayName",
@@ -29,7 +29,7 @@ export function missionDisPlot(data, mode = "hourly") {
       marks: marks,
     });
   } else {
-    // 24小时分布：按小时
+    // 24 hour distribution: by hour
     marks.push(Plot.barY(data, {
       x: "Hour",
       y: "count",

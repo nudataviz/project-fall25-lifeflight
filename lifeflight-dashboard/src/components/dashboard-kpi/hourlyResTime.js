@@ -3,7 +3,7 @@ import * as d3 from "npm:d3";
 
 export function hourlyResTime(data) {
   return Plot.plot({
-    title: "Dispatch Time by Hour of Day(enrtime - disptime) - 2024.08",
+    title: "Dispatch Response Time by Hour of Day(enrtime - disptime) - 2024.08",
     width: 1000,
     height: 500,
     marginTop: 40,
@@ -17,7 +17,7 @@ export function hourlyResTime(data) {
     r: {range: [0, 14]},
     y: {
       grid: true,
-      label: "Dispatch Time (minutes)",
+      label: "Dispatch Response Time (minutes)",
       nice: true
     },
     marks: [

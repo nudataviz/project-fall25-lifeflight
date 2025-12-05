@@ -110,6 +110,17 @@ if(rangeMapError){
   </div>`)
 }
 ```
+<div style="margin-top: 20px;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 15px;">
+      ${Object.entries(rangeMapStats.coverage_stats || {}).map(([base, count]) => {
+        return html`<div class="card">
+          <h4>${base}</h4>
+          <p style="font-size: 18px; font-weight: bold; color: #2E86C1; margin: 10px 0;">
+            ${count} cities covered
+          </p>
+        </div>`;
+      })}
+    </div>
 
 <!-- ## Coverage Statistics
 ```js

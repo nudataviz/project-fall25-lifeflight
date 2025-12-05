@@ -39,8 +39,10 @@ Last data date: 2024.08
     <span class="big">${indicatorData?.data?.mart}</span>
   </div> -->
 </div>
+<!-- <span style="white-space: nowrap;">
+</span> -->
 
-# <span style="white-space: nowrap;">Dispatch Time and Mission Volume: 24-Hour Distribution for This Month</span>
+# Mission Volume and Dispatch Response Time
 
 ```js
 const responseDis = await fetch('http://localhost:5001/api/get_24hour_distribution')
