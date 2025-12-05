@@ -7,15 +7,17 @@ title: Current Base Analysis
   <span style="color: #333; font-weight: 500;">2.1 Existing Base Analysis</span>
 </div>
 
-# 2.1 Current Base Analysis
-In this section, we analyze the current base coverage and compare the average Travel Time to Scene before and after the changes.
+In section 2, we analyze the current base coverage and compare the average Travel Time to Scene before and after the changes.
 
 Only missions that occurred in the state of Maine are included (based on tasks where the pickup city is located in Maine).
+
+# 2.1 Current Base Analysis
+
 
 <br/>
 
 
-## Vehicle Mileage Statistics
+<!-- ## Vehicle Mileage Statistics
 We use the ‘Roux Full Dispatch Data–redacted–v2’ dataset (2012.07–2023.12).
 Each record belongs to one of four air bases:
 - L1: Bangor Rotor-Wing
@@ -53,9 +55,9 @@ import {boxPlot} from "./components/scenario-modeling/boxPlot.js"
 
 ```js
 boxPlot(boxplotData,showOutlier) 
-```
+``` -->
 
-```js
+<!-- ```js
 html`<div style="margin-top: 20px;">
   <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-top: 15px;">
     ${Object.keys(summary || {}).map(veh => {
@@ -89,7 +91,7 @@ html`<div style="margin-top: 20px;">
     })}
   </div>
 </div>`
-```
+``` -->
 
 ##  Pickup Location Heatmap
 The heatmap displays the PU cities associated with each unit.
