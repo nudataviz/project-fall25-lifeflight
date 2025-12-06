@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="generator" content="Observable Framework v1.13.3">
+<title>Service Coverage: All Units | Lifeflight Dashboard</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&amp;display=swap" crossorigin>
+<link rel="preload" as="style" href="./_observablehq/theme-air,near-midnight.dcdbf18e.css">
+<link rel="preload" as="style" href="./_observablehq/stdlib/inputs.ea9fd553.css">
+<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&amp;display=swap" crossorigin>
+<link rel="stylesheet" type="text/css" href="./_observablehq/theme-air,near-midnight.dcdbf18e.css">
+<link rel="stylesheet" type="text/css" href="./_observablehq/stdlib/inputs.ea9fd553.css">
+<link rel="modulepreload" href="./_observablehq/client.33da7c34.js">
+<link rel="modulepreload" href="./_observablehq/runtime.e080113b.js">
+<link rel="modulepreload" href="./_observablehq/stdlib.73a8ec5a.js">
+<link rel="modulepreload" href="./_import/components/scenario-modeling/rangeMap.58863583.js">
+<link rel="modulepreload" href="./_npm/htl@0.3.1/72f4716c.js">
+<link rel="modulepreload" href="./_observablehq/stdlib/inputs.4ef1d259.js">
+<link rel="modulepreload" href="./_npm/isoformat@0.2.1/18cbf477.js">
+<link rel="icon" href="./_file/observable.1af93621.png" type="image/png" sizes="32x32">
+<script type="module">
+
+import {define} from "./_observablehq/client.33da7c34.js";
+
+define({id: "d58e12dd", inputs: ["Inputs"], outputs: ["existBase","optionalBase","serviceRadius","expectedTime"], body: (Inputs) => {
+const existBase = Inputs.checkbox(['BANGOR', 'LEWISTON', 'SANFORD'], {label: "Existing Base Locations",value:['BANGOR', 'LEWISTON', 'SANFORD']});
+
+const optionalBase = Inputs.checkbox([
+        'ROCKPORT', 'AUGUSTA', 'BELFAST', 'WATERVILLE',
+        'SKOWHEGAN', 'BRIDGTON', 'PRESQUE ISLE', 'PORTLAND',
+        'BIDDEFORD', 'AUBURN'
+    ], {label: "Add more Base Locations"});
+
+const serviceRadius = Inputs.range([20,300], {label: "Service Radius (miles)", value: 40, step:1})
+
+const expectedTime = Inputs.range([10,50],{label: "Expected Dispatch-to-Patient Time(Minutes)", value: 20, step:1})
+return {existBase,optionalBase,serviceRadius,expectedTime};
+}});
+
+define({id: "ff8f4ad7", inputs: ["html","existBase","optionalBase","serviceRadius","expectedTime","display"], body: async (html,existBase,optionalBase,serviceRadius,expectedTime,display) => {
+display(await(
+html.fragment`${existBase}
+${optionalBase}
+${serviceRadius}
+<!-- ${expectedTime} -->`
+))
+}});
+
+define({id: "484eb1e1", inputs: ["Generators","existBase","optionalBase","serviceRadius","expectedTime"], outputs: ["existBaseValue","optionalBaseValue","serviceRadiusValue","expectedTimeValue"], body: (Generators,existBase,optionalBase,serviceRadius,expectedTime) => {
+const existBaseValue = Generators.input(existBase);
+const optionalBaseValue = Generators.input(optionalBase);
+const serviceRadiusValue = Generators.input(serviceRadius)
+const expectedTimeValue = Generators.input(expectedTime)
+return {existBaseValue,optionalBaseValue,serviceRadiusValue,expectedTimeValue};
+}});
+
+define({id: "528665c4", outputs: ["rangeMap"], body: async () => {
+const {rangeMap} = await import("./_import/components/scenario-modeling/rangeMap.58863583.js");
+
+return {rangeMap};
+}});
+
+define({id: "615c8a3d", inputs: ["existBaseValue","optionalBaseValue","URLSearchParams","serviceRadiusValue","expectedTimeValue"], outputs: ["rangeMapData","rangeMapError","rangeMapStats"], body: async (existBaseValue,optionalBaseValue,URLSearchParams,serviceRadiusValue,expectedTimeValue) => {
+let rangeMapData = null
+let rangeMapError = null
+let rangeMapStats = null
+
+if(existBaseValue && existBaseValue.length > 0){
+  try{
+    const allBases = [...existBaseValue, ...(optionalBaseValue || [])]
+    
+    const params = new URLSearchParams()
+    allBases.forEach(base => {
+      params.append('baseValue', base)
+    })
+    params.append('radius', serviceRadiusValue)
+    params.append('expectedTime', expectedTimeValue||20)
+    
+    const rangeMapResponse = await fetch(`http://localhost:5001/api/get_range_map?${params}`)
+    if(!rangeMapResponse.ok){
+      throw new Error(`HTTP ${rangeMapResponse.status}: ${rangeMapResponse.statusText}`)
+    }
+    const responseData = await rangeMapResponse.json()
+    rangeMapData = {
+      heatmapData: responseData.heatmap_data || [],
+      baseLocations: responseData.base_locations || []
+    }
+    rangeMapStats = responseData.statistics
+    rangeMapError = null
+  }catch(e){
+    rangeMapError = e.message
+    rangeMapData = null
+    rangeMapStats = null
+    console.error('Range map fetch error:', e)
+  }
+}
+return {rangeMapData,rangeMapError,rangeMapStats};
+}});
+
+define({id: "988f2832", inputs: ["rangeMapError","display","html","rangeMapData","serviceRadiusValue","rangeMap","existBaseValue"], body: (rangeMapError,display,html,rangeMapData,serviceRadiusValue,rangeMap,existBaseValue) => {
+if(rangeMapError){
+  display(html`<div class="card" style="padding: 20px; color: red;">
+    <h3>Error loading range map</h3>
+    <p>${rangeMapError}</p>
+  </div>`)
+} else if(rangeMapData){
+  display(html`
+    <div class="card" style="overflow: hidden;">
+      <h2>Service Range Map</h2>
+      <h3 style="color: #666;">
+        Service coverage with ${serviceRadiusValue} mile radius
+      </h3>
+      ${rangeMap(rangeMapData.heatmapData, rangeMapData.baseLocations, serviceRadiusValue)}
+    </div>
+  `)
+} else if(!existBaseValue || existBaseValue.length === 0){
+  display(html`<div class="card" style="padding: 20px; color: #666;">
+    <p>Please select at least one base location to view the range map.</p>
+  </div>`)
+}
+}});
+
+define({id: "7d82f563", mode: "inline", inputs: ["rangeMapStats","html","display"], body: async (rangeMapStats,html,display) => {
+display(await(
+Object.entries(rangeMapStats.coverage_stats || {}).map(([base, count]) => {
+        return html`<div class="card">
+          <h4>${base}</h4>
+          <p style="font-size: 18px; font-weight: bold; color: #2E86C1; margin: 10px 0;">
+            ${count} cities covered
+          </p>
+        </div>`;
+      })
+))
+}});
+
+</script>
+</head>
+<body>
+<input id="observablehq-sidebar-toggle" type="checkbox" title="Toggle sidebar">
+<label id="observablehq-sidebar-backdrop" for="observablehq-sidebar-toggle"></label>
+<nav id="observablehq-sidebar">
+  <ol>
+    <label id="observablehq-sidebar-close" for="observablehq-sidebar-toggle"></label>
+    <li class="observablehq-link"><a href="./">Lifeflight Dashboard</a></li>
+  </ol>
+  <section>
+    <summary>Forecasting</summary>
+    <ol>
+    <li class="observablehq-link"><a href="./demand-forecasting">Demand Forecasting</a></li>
+    </ol>
+  </section>
+  <section class="observablehq-section-active">
+    <summary>What-If Scenarios: Coverage Optimization</summary>
+    <ol>
+    <li class="observablehq-link"><a href="./base-analysis">Base analysis</a></li>
+    <li class="observablehq-link observablehq-link-active"><a href="./scenario-modeling">All Units Coverage</a></li>
+    <li class="observablehq-link"><a href="./ground-unit">Ground Units Coverage</a></li>
+    </ol>
+  </section>
+</nav>
+<script>{const e=document.querySelector("#observablehq-sidebar"),o=document.querySelector("#observablehq-sidebar-toggle"),r=sessionStorage.getItem("observablehq-sidebar");r?o.checked=r==="true":o.indeterminate=!0;for(const t of document.querySelectorAll("#observablehq-sidebar summary")){const s=t.parentElement;switch(sessionStorage.getItem(`observablehq-sidebar:${t.textContent}`)){case"true":s.open=!0;break;case"false":s.classList.contains("observablehq-section-active")||(s.open=!1);break}}addEventListener("beforeunload",()=>sessionStorage.setItem("observablehq-sidebar-scrolly",`${e.scrollTop}`));const a=sessionStorage.getItem("observablehq-sidebar-scrolly");a!=null&&(e.style.cssText="overflow: hidden;",e.scrollTop=+a,e.style.cssText="");}</script>
+<div id="observablehq-center">
+<aside id="observablehq-toc" data-selector="h1:not(:first-of-type)[id], h2:first-child[id], :not(h1) + h2[id]">
+<nav>
+<div>Contents</div>
+<ol>
+<li class="observablehq-secondary-link"><a href="#input-parameters">Input Parameters</a></li>
+</ol>
+</nav>
+</aside>
+<main id="observablehq-main" class="observablehq">
+<div class="breadcrumb" style="margin-bottom: 2rem; color: #666; font-size: 0.9rem;">
+  <a href="./">Home</a> › 
+  <span style="color: #333; font-weight: 500;">What-If: Coverage Optimization</span> › 
+  <span style="color: #333; font-weight: 500;">2.2 Service Coverage: All Units</span>
+</div>
+<h1 id="2-2-service-coverage-all-units" tabindex="-1"><a class="observablehq-header-anchor" href="#2-2-service-coverage-all-units">2.2 Service Coverage: All Units</a></h1>
+<div class="note" label="Data Notes">
+<ul>
+<li>This analysis uses the <em>FlightTransportsMaster.csv(2021-2024)</em> as it involves time-based calculations.</li>
+<li>LifeFlight operates three bases: Bangor, Lewiston, and Sanford (<a href="https://lifeflightmaine.org/our-services/helicopter-transport/" target="_blank" rel="noopener noreferrer">LifeFlight Website</a>).</li>
+<li>City coordinates are used as approximate base locations.</li>
+<li>Optional Base Locations are selected from cities with higher mission volumes.</li>
+</ul>
+</div>
+<h2 id="input-parameters" tabindex="-1"><a class="observablehq-header-anchor" href="#input-parameters">Input Parameters</a></h2>
+<div class="observablehq observablehq--block"><!--:d58e12dd:--></div>
+<div class="observablehq observablehq--block"><observablehq-loading></observablehq-loading><!--:ff8f4ad7:--></div>
+<div class="observablehq observablehq--block"><!--:484eb1e1:--></div>
+<div class="observablehq observablehq--block"><!--:528665c4:--></div>
+<div class="observablehq observablehq--block"><!--:615c8a3d:--></div>
+<div class="observablehq observablehq--block"><!--:988f2832:--></div>
+<div style="margin-top: 20px;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 15px;">
+      <observablehq-loading></observablehq-loading><!--:7d82f563:-->
+    </div>
+<!-- ## Coverage Statistics
+```js
+if(rangeMapStats){
+  display(html`<div style="margin-top: 20px;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 15px;">
+      ${Object.entries(rangeMapStats.coverage_stats || {}).map(([base, count]) => {
+        return html`<div class="card">
+          <h4>${base}</h4>
+          <p style="font-size: 18px; font-weight: bold; color: #2E86C1; margin: 10px 0;">
+            ${count} cities covered
+          </p>
+        </div>`;
+      })}
+    </div>
+    
+    <div class="card" style="margin-top: 15px;">
+      <h4>Compliance Statistics</h4>
+      <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+        <tr>
+          <td style="padding: 8px; color: #666;">Total Tasks:</td>
+          <td style="padding: 8px; text-align: right; font-weight: 500;">${rangeMapStats.compliance_stats?.total_tasks || 0}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; color: #666;">Compliant Tasks:</td>
+          <td style="padding: 8px; text-align: right; font-weight: 500; color: #28B463;">${rangeMapStats.compliance_stats?.compliant_tasks || 0}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; color: #666;">Compliance Rate:</td>
+          <td style="padding: 8px; text-align: right; font-weight: 500; color: #28B463;">${rangeMapStats.compliance_stats?.compliance_rate?.toFixed(2) || 0}%</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px; color: #666;">Avg Response Time:</td>
+          <td style="padding: 8px; text-align: right; font-weight: 500;">${rangeMapStats.compliance_stats?.avg_response_time?.toFixed(2) || 0} minutes</td>
+        </tr>
+      </table>
+    </div>
+  </div>`)
+}
+``` -->
+</div></main>
+<footer id="observablehq-footer">
+<nav><a rel="prev" href="./base-analysis"><span>Base analysis</span></a><a rel="next" href="./ground-unit"><span>Ground Units Coverage</span></a></nav>
+<div>Built with <a href="https://observablehq.com/" target="_blank" rel="noopener noreferrer">Observable</a> on <a title="2025-12-06T15:37:29">Dec 6, 2025</a>.</div>
+</footer>
+</div>
+</body>
+</html>
