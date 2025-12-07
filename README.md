@@ -84,9 +84,9 @@ This heatmap aggregates historical missions by weekday and hour to reveal long-t
 
 ### 3. Base Layout & Service Coverage Simulation
 
-![Current Base Analysis](images/base-mileage-analysis.png)
+<!-- ![Current Base Analysis](images/base-mileage-analysis.png)
 
-This view analyzes the mileage distributions for each air base, clarifying which bases mainly serve long-haul missions and which provide broader regional coverage.
+This view analyzes the mileage distributions for each air base, clarifying which bases mainly serve long-haul missions and which provide broader regional coverage. -->
 
 ![Response Time by City](images/city-response-time.png)
 

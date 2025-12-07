@@ -1,7 +1,7 @@
 import {html} from "npm:htl";
 
 export function rangeMap(heatmapData, baseLocations, radiusMiles) {
-  // 处理热力图数据点
+  // process heatmap data points
   const heatmapPoints = heatmapData
     .map(d => {
       const lat = parseFloat(d.latitude);
@@ -11,11 +11,11 @@ export function rangeMap(heatmapData, baseLocations, radiusMiles) {
     })
     .filter(p => p !== null);
   
-  // 处理基地位置
+  // process base locations
   const basesJson = JSON.stringify(baseLocations);
   const heatmapPointsJson = JSON.stringify(heatmapPoints);
   
-  // 计算地图中心
+  // calculate map center
   let centerLat = 44.5;
   let centerLon = -69.0;
   if (baseLocations.length > 0) {
@@ -26,7 +26,7 @@ export function rangeMap(heatmapData, baseLocations, radiusMiles) {
     centerLon = heatmapPoints.reduce((sum, p) => sum + p[1], 0) / heatmapPoints.length;
   }
   
-  // 创建完整的 HTML 文档
+  // create complete HTML document
   const mapHtml = `
     <!DOCTYPE html>
     <html>
@@ -49,7 +49,7 @@ export function rangeMap(heatmapData, baseLocations, radiusMiles) {
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
         
-        // 添加热力图
+        // add heatmap layer
         const heatmapPoints = ${heatmapPointsJson};
         if (heatmapPoints.length > 0) {
           L.heatLayer(heatmapPoints, {
@@ -60,13 +60,13 @@ export function rangeMap(heatmapData, baseLocations, radiusMiles) {
           }).addTo(map);
         }
         
-        // 添加基地标记和服务半径圆圈
+        // add base markers and service radius circles
         const bases = ${basesJson};
         const radiusMiles = ${radiusMiles};
-        const radiusMeters = radiusMiles * 1609.34; // 转换为米
+        const radiusMeters = radiusMiles * 1609.34; // convert miles to meters
         
         bases.forEach(base => {
-          // 添加基地标记
+          // add base marker
           L.marker([base.latitude, base.longitude], {
             icon: L.divIcon({
               className: 'base-marker',
@@ -78,7 +78,7 @@ export function rangeMap(heatmapData, baseLocations, radiusMiles) {
           .bindPopup('<b>' + base.name + '</b><br>Service Radius: ' + radiusMiles + ' miles')
           .addTo(map);
           
-          // 添加服务半径圆圈
+          // add service radius circle
           L.circle([base.latitude, base.longitude], {
             radius: radiusMeters,
             color: 'blue',
