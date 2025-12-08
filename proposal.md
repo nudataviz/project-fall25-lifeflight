@@ -1,8 +1,25 @@
 # ProjectName
-FlightPath Optimizer
+FlightPath Dashboard
 
 # Story
-We are prototyping a sophisticated predictive analytics platform that will empower LifeFlight to strategically **forecast emergency medical demand** over a 5–10 year horizon and model **optimal resource allocation scenarios** (such as new base locations) to save more lives and ensure equitable service coverage. The platform will integrate key external data, including **population projections, historical and forecasted weather data**, and **age demographics**, to enhance the precision of demand forecasts and resource optimization.
+
+We are prototyping an interactive analytics dashboard to help LifeFlight explore its historical operations, 
+
+forecast emergency medical demand over a multi-year horizon, and compare alternative resource allocation scenarios 
+
+(such as different base locations and service radii).
+
+The prototype focuses on:
+
+- visualizing current mission volume, response times, and base workload,
+
+- using a Prophet time-series model with selected demographic variables to forecast future mission demand, and
+
+- providing interactive maps to compare service coverage and response times under different base layout scenarios.
+
+The goal is not to deliver a production optimization engine, but to offer a transparent, data-driven decision support tool 
+
+that LifeFlight staff can build on in future work.
 
 # Stakeholder
 Dan Koloski (Initial Contact), LifeFlight Staff (Eventual Users)
@@ -17,180 +34,178 @@ Dan Koloski (Initial Contact), LifeFlight Staff (Eventual Users)
 ## Repo
 https://github.com/nudataviz/project-fall25-lishenyu1024
 
-## Repo access
-✅ Team lead is working with the instructor to ensure all members have access via GitHub Classroom team management.
-
 ---
 
 # Data
 ## Describe
-We will use historical and current **LifeFlight operational data** (including transport volume, patient origin/destination, asset utilization) combined with the following **external data** to train predictive models and execute scenario simulations:
-- **Population data** (historical: 2012–2023, and projections for the next 5–10 years, by county/city)
-- **Population age structure** data, detailing age distribution at a county/city level
-- **Historical weather data** (e.g., extreme weather days, seasonal trends)
-- **Weather forecast data** (for future weather scenarios)
+We primarily use historical and current **LifeFlight operational data** 
 
-These datasets will be used to integrate external variables into forecasting models, enabling us to predict demand and optimize resources more accurately over the next 5–10 years. 
+(including transport volume, pickup locations, bases, and asset type) and augment it with a limited set of external data:
+
+- **Population and demographic data** (historical and projections at the county/city level)
+
+- **Age structure** variables used as external regressors in the forecasting model
+
+- **Public weather history sources** explored as potential future regressors
+
+In the current prototype, demographic variables are integrated into the forecasting model.  
+
+Weather data is documented as a possible extension but is not yet fully incorporated into the model.
 
 ## Link / Risks
-The core data is currently available in a **SharePoint** repository accessible via Dan Koloski. The primary risk is the **complexity of integrating and synthesizing diverse external datasets** (e.g., population projections, weather data) required for accurate long-term **5–10 year forecasting** and variable "what-if" modeling. The challenge lies in ensuring the quality and consistency of population projections and weather forecasts, especially considering their impact on demand forecasting.
+The core operational data is available in a **SharePoint** repository accessible via Dan Koloski.  
+
+The main risk is the complexity of cleaning and aligning multiple external datasets (population, demographics, weather) 
+
+and the limited time to fully integrate them into robust long-term forecasting and scenario simulations.
 
 ---
 
-# Scope & Objectives (mapped to client request)
-- **Predictive analytics**
-  - 5–10 year demand forecasting using historical patterns and demographic trends
-  - Integration of external factors (weather patterns, population changes, hospital closures)
-  - Variable adjustment capabilities (assets, geographic coverage, shifting demand)
-  - Scenario comparison tools for evaluating multiple strategic options
-- **Resource optimization**
-  - Current capacity vs. demand analysis
-  - Base location optimization (e.g., Aroostook County evaluation)
-  - Unmet demand identification and quantification
-  - Asset utilization metrics and recommendations
-- **Interactive dashboard & reporting**
-  - Real-time scenario-modeling interface
-  - Customizable inputs with immediate output updates
-  - Executive-ready visuals for fundraising and board presentations
-  - Export capabilities for strategic planning documentation
-  - Explore existing research and methods (Jo Røislien’s research, NZ/AU examples)
-  - Define key performance indicators and success metrics
+# Scope & Objectives (Current Prototype)
+
+## Implemented Features
+
+### 1. Current Operations & Service Quality Analysis
+
+- Mission volume by weekday and hour
+
+- Dispatch/response time distribution
+
+- Base workload comparison across air and ground units
+
+- "Transport by Primary Q" analysis (appropriate asset without delay)
+
+- Expected completion rate and no-response reason analysis
+
+### 2. Mid- to Long-Term Demand Forecasting
+
+- Multi-year mission volume forecasting using a Prophet time-series model
+
+- External regressors based on demographic / age-structure data
+
+- Seasonality analysis via weekday/hour heatmaps
+
+- Model performance metrics (MAE, MAPE, RMSE)
+
+### 3. Scenario Simulation of Base Layout and Service Scope
+
+- Interactive coverage map with existing and candidate base locations
+
+- Adjustable service radius for scenario comparison
+
+- Response time analysis by city and base
+
+- Ground-unit-specific coverage analysis (e.g., neoGround)
+
+## Technical Implementation
+
+- **Backend:** Flask REST API providing processed data and forecast endpoints
+
+- **Frontend:** Observable Framework interactive dashboard
+
+- **Deployment:** GitHub Pages (static build served from `docs/`)
 
 ---
 
 # Visualization Plan (by category)
-**Total: 5 categories, 19 core visuals** for a convincing prototype that can scale to production dashboards.
+**Total: 3 categories, 10+ core visuals** implemented as a working prototype.
 
-## 1) Demand Forecasting (4 charts)
+## 1) Current Operations & Service Quality Dashboard
 
-### 1.1 Long-term Demand Forecast Line with Uncertainty Band (5–10 years)
-- **Why (original requirement):**
-  - “**5–10 year demand forecasting** using historical patterns and demographic trends”
-  - “**Integration of external factors** (weather patterns, population changes, etc.)”
-- **How (implementation suggestion):**
-  - Model: hierarchical time series (Prophet/ARIMA with holidays/seasonality) or gradient boosting (LightGBM) with time-aware features.
-  - Exogenous variables: population projections, age structure, seasonal indices, extreme-weather days, hospital change indicators.
-  - Viz: annual/quarterly line with **95% confidence band**; level toggle (system/state/county/base).
-  - Interaction: scenario switcher (baseline/optimistic/conservative external factors).
+### 1.1 Mission Volume Distribution (Weekday × Hour Heatmap)
+- **Implementation:** Aggregates historical missions by weekday and hour to identify peak demand periods.
+- **Visualization:** Heatmap showing mission volume patterns across time dimensions.
 
-### 1.2 Seasonality & Day-of-Week/Hour Heatmap
-- **Why (original requirement):** “**Analyze historical and current operational data** to predict future demand patterns”; “**Seasonal patterns**.”
-- **How:** aggregate deployments to (month × weekday × hour); heatmap intensity = average missions per 1,000 population. Year filter, location switch, YoY/MoM deltas.
+### 1.2 Response Time Analysis (Hourly Distribution)
+- **Implementation:** Displays average response time (dispatch time - enroute time) by hour of day for the current month.
+- **Visualization:** Line chart showing response time patterns throughout the day.
 
-### 1.3 Demographics vs. Demand Elasticity (Scatter + Fit / Marginal Effects)
-- **Why (original requirement):** “**Demographic shifts** and **evaluate service expansion scenarios**.”
-- **How:** county-level regressions of missions per 1,000 vs. growth rate, 65+ share, disease burden; show elasticity coefficients with CIs and marginal impact bars by cohort (geriatrics/pediatrics/trauma).
+### 1.3 Base Workload Analysis
+- **Implementation:** Compares workload across different bases (air units and ground units).
+- **Visualization:** Bar/area charts showing workload distribution by base.
 
-### 1.4 External Event Impact Replay (Event Study Line + Structural Breaks)
-- **Why (original requirement):** “**External factors** (hospital closures, population shifts)” and “**service area changes**.”
-- **How:** causal impact via breakpoint regression / synthetic control / Bayesian structural time series; visualize pre/post with effect intervals and cumulative impact; event picker (e.g., a hospital closure).
+### 1.4 Transport by Primary Q Analysis
+- **Implementation:** Analyzes the `transportByPrimaryQ` field to measure whether patients were transported by the most appropriate asset without delay.
+- **Visualization:** 
+  - Delay Rate chart showing the proportion of "Yes" responses by base
+  - Delay Reason chart showing causes of delays when conditions are not met
 
----
-
-## 2) Scenario Modeling (4 charts)
-
-### 2.1 What-If Scenario Panel (Inputs → KPI Mini-Multiples)
-- **Why:** “**Model ‘what-if’ scenarios** (resource allocation, new bases, service area changes)” and “**real-time scenario planning**.”
-- **How:** sidebar parameters (fleet, crews, base locations, service radius, SLA target); main panel shows KPIs (missions, SLA attainment, unmet demand, cost) as mini-cards; save/compare scenarios.
-
-### 2.2 Base Siting Coverage Map (Isochrones/Voronoi + Response Time)
-- **Why:** “**Base location optimization** (e.g., Aroostook County).”
-- **How:** drive-/flight-time isochrones + Voronoi; grid simulation of 5–20-minute coverage; heatmap coverage before/after candidate base; on-click updates SLA lift and incremental cost.
-
-### 2.3 Service Area Sensitivity (Coverage vs. Response Time Pareto)
-- **Why:** “**Compare multiple strategic options** under resource and geography changes.”
-- **How:** plot Pareto frontier across radius/SLA thresholds; highlight chosen scenario and dominated options; allow weight sliders (population/SLA/cost) to auto-select an efficient point.
-
-### 2.4 Weather-Driven Risk Boxes (Extreme Weather Frequency vs. Demand)
-- **Why:** “**Integration of weather patterns**.”
-- **How:** stratify by quantiles of extreme-weather days; boxplots of mission distribution; guides contingency staffing/aircraft redundancy policies.
+### 1.5 Expected Completion Rate & No Response Reasons
+- **Implementation:** Evaluates whether tasks were completed by the expected base (`appropriateAsset` vs `respondingAssets`).
+- **Visualization:**
+  - Expected Completion Rate by Base chart
+  - No Response Reasons by Base chart showing why expected bases did not respond
 
 ---
 
-## 3) Resource Optimization (5 charts)
+## 2) Demand Forecasting
 
-### 3.1 Capacity vs. Demand Match (Stacked Area/Waterfall)
-- **Why:** “**Current capacity vs. demand analysis**.”
-- **How:** compute max serviceable missions by shift/aircraft/base; overlay demand curve and **highlight gaps** by time/region.
+### 2.1 Demand Forecast (multi-year)
+- **Implementation:** Uses a Prophet time-series model with demographic regressors to forecast mission volume.
+- **Model Features:** 
+  - Integration of age-structure variables derived from population data
+  - Reports MAE, MAPE, and RMSE for model evaluation
+- **Visualization:** Line chart with historical and forecasted mission volume, including confidence intervals.
 
-### 3.2 Fleet & Crew Utilization (Heatmap/Gantt)
-- **Why:** “**Asset utilization metrics and recommendations**.”
-- **How:** utilization, turnaround, standby, maintenance share; Gantt + utilization heatmap to expose bottleneck shifts/bases.
-
-### 3.3 Unmet Demand Map + Quantification Bars
-- **Why:** “**Unmet demand identification and quantification**.”
-- **How:** estimate via SLA threshold breaches, failed dispatches, diversions; choropleth + Top-N bar chart with **opportunity gain** estimates.
-
-### 3.4 Response-Time Distribution & SLA Attainment Curve
-- **Why:** supports “**strategic decisions**” and “**real-time scenario planning**.”
-- **How:** P(X ≤ SLA) curves with median/95th; facets by time-of-day/weather.
-
-### 3.5 Marginal Benefit of Resource Increments (Prioritization Bars)
-- **Why:** “**Asset allocation recommendations** and **scenario comparison**.”
-- **How:** simulate incremental add-one (1 aircraft / 1 crew / 1 base) and show ΔKPI; rank by benefit-cost ratio.
+### 2.2 Seasonality & Day-of-Week/Hour Heatmap
+- **Implementation:** Aggregates historical missions by weekday and hour to reveal cyclical patterns.
+- **Visualization:** Heatmap showing long-term demand patterns across time dimensions.
 
 ---
 
-## 4) KPI & Executive Dashboard (4 charts)
+## 3) Scenario Modeling & Base Layout
 
-### 4.1 Core KPI Bullet Charts (Board Summary)
-- **Why:** “**Executive-ready visualizations for fundraising and board presentations**”; “**KPIs & success metrics**.”
-- **How:** missions, SLA, unmet demand, transfer success rate, flight hours, unit cost; bullet charts vs target/historic trend.
+### 3.1 Interactive Coverage Map
+- **Implementation:** Interactive map allowing users to toggle existing and candidate base locations and adjust service radius for scenario comparison.
+- **Features:**
+  - Real-time coverage visualization
+  - Comparison of coverage under different base configurations
+- **Visualization:** Interactive map with coverage areas and base location markers.
 
-### 4.2 Trend Wall (Metric Cards + Lines)
-- **Why:** “**Real-time scenario planning & strategic decision-making**.”
-- **How:** KPI cards (YTD, YoY); monthly lines with short forecast tails.
+### 3.2 Response Time by City
+- **Implementation:** Analyzes city-level response times by base to identify locations with significantly longer response times.
+- **Visualization:** Chart/map showing response time patterns across different cities and bases.
 
-### 4.3 Cost–Benefit–Throughput Dual-Axis
-- **Why:** “**Strategic planning & fundraising** narrative.”
-- **How:** unit service cost vs. social benefit / revenue; annotate key inflection points and scenario labels.
-
-### 4.4 Safety & Quality SPC Control Charts
-- **Why:** “**Define success metrics** including safety/quality.”
-- **How:** incident rates with mean/UCL/LCL; call out assignable-cause points.
-
----
-
-## 5) Reporting & Export (2 modules)
-
-### 5.1 Scenario Comparison Table (Exportable)
-- **Why:** “**Compare multiple strategic options**” and “**export capabilities**.”
-- **How:** standardized KPI columns for scenarios A/B/C; one-click export to PDF/PPT.
-
-### 5.2 Decision Path Sankey (Narrative)
-- **Why:** “**Board/fundraising presentations**.”
-- **How:** visualize “Objectives → Constraints → Alternatives → Selected Option” to make trade-offs explicit.
+### 3.3 Ground Unit Service Coverage
+- **Implementation:** Ground-unit-specific analysis estimating typical speeds, coverage radius, and compliance rates for units such as neoGround.
+- **Visualization:** Coverage map and metrics specific to ground transport units.
 
 ---
 
 # Technical Approach
 
-## Methods & Prior Art
-- Align variable definitions and metric conventions with **Dan Koloski’s prior methodology/deliverables** to maintain comparability.
-- Incorporate proven techniques from **Jo Røislien’s research** and **NZ/AU** aeromedical examples (seasonality, spatial coverage, response time).
+We align variable definitions and some metric conventions with **Dan Koloski's prior methodology and deliverables** to maintain comparability.  
 
-## Modeling & Data Stack
-- **Modeling:** Python (Prophet/ARIMA, LightGBM, Bayesian structural time series), causal impact methods; OR-Tools for location optimization.
-- **GIS:** GeoPandas / OSMnx for isochrones and coverage modeling.
-- **Visualization/App:** Streamlit or Observable for rapid prototyping; Power BI/Tableau for executive-grade dashboards and exports.
-- **Data:** Operational logs (missions, timestamps, origins/destinations), fleet/crew rosters, maintenance, hospital events; external population forecasts, weather histories and projections.
+We also reference approaches in published aeromedical research (e.g., Jo Røislien, NZ/AU examples) for handling seasonality, spatial coverage, 
 
-## Interaction & Governance
-- Centralize all scenario parameters in a **config table**; define KPIs as reusable measures/functions shared by models and dashboards; maintain scenario versions for A/B/C comparisons.
+and response-time analysis, adapting them to the scope of this prototype.
 
 ---
 
 # KPIs & Success Metrics
-- Missions (total / per 1,000 pop), SLA attainment (median/95th response time), Unmet demand, Transfer success rate, Flight hours, Fleet/Crew utilization, Unit cost, Safety/quality incident rates.
+
+In the current prototype, the dashboard focuses on:
+
+- Mission volume (overall and by time of week)
+
+- Base workload distribution
+
+- Dispatch/response time metrics
+
+- Proportion of missions completed by the expected base
+
+- Coverage and compliance metrics in scenario simulations
+
+Additional KPIs such as unit cost, fleet utilization, or safety incident rates are documented as potential extensions 
+
+but are not implemented in this version.
 
 ---
 
-# Summary of Visuals
-- **Demand Forecasting:** 4
-- **Scenario Modeling:** 4
-- **Resource Optimization:** 5
-- **KPI & Executive Dashboard:** 4
-- **Reporting & Export:** 2  
-**Total:** **19 visuals**
+# Summary of Visuals (Implemented)
+- **Current Operations & Service Quality Dashboard:** 5+ charts
+- **Demand Forecasting:** 2 charts
+- **Scenario Modeling & Base Layout:** 3+ interactive visualizations
+**Total:** **10+ core visualizations** implemented and functional
 
 ---

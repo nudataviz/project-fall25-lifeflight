@@ -1,10 +1,6 @@
 # Lifeflight Dashboard
 
-LifeFlight of Maine is a non-profit air ambulance and critical care transport agency. It operates three modes of transport: helicopters, fixed-wing aircraft, and ground ambulances, including the specialized neoGround neonatal unit.
-
-At the same time, Maine is large, people are dispersed, weather is harsh, hospitals are closing or merging, and the population is aging. But LifeFlight’s fleet and bases are finite. 
-
-Under these constraints, planning base locations, dispatching aircraft and vehicles, and deciding whether to add or relocate bases become critical strategic questions.
+LifeFlight of Maine is a non-profit air ambulance and critical care transport agency. It operates three modes of transport: helicopters, fixed-wing aircraft, and ground ambulances, including the specialized neoGround neonatal unit. At the same time, Maine is large, people are dispersed, weather is harsh, hospitals are closing or merging, and the population is aging. But LifeFlight's fleet and bases are finite. Under these constraints, planning base locations, dispatching aircraft and vehicles, and deciding whether to add or relocate bases become critical strategic questions.
 
 We build an interactive data visualization dashboard for analyzing medical transport services data.
 
@@ -59,7 +55,7 @@ The frontend will be available at: `http://127.0.0.1:3000/ `
 This view shows mission volume by weekday and hour, together with dispatch times.  
 It helps identify peak demand periods and time windows with slower dispatch performance.
 
-![Base Workload and Delay Reasons](Images of README/base-workload-delays.png)
+![Base Workload and Delay Reasons](images/base-workload-delays.png)
 <img width="988" height="471" alt="截屏2025-12-06 17 19 18" src="https://github.com/user-attachments/assets/dfb51b65-6683-4856-9c3f-6a5d64f7c0d9" />
 
 This view compares workload across bases and visualizes “appropriate asset without delay” rates and delay reasons,  
@@ -69,12 +65,12 @@ highlighting overloaded bases and the main operational bottlenecks.
 
 ### 2. Demand Forecasting
 
-![Prophet Demand Forecast](Images of README/demand-forecast.png)
+![Prophet Demand Forecast](images/demand-forecast.png)
 
 This page uses a Prophet time-series model with demographic regressors to forecast mission volume over the next few years.  
 It also reports MAE / MAPE / RMSE to evaluate model performance.
 
-![Day-of-Week / Hour Heatmap](Images of README/demand-heatmap.png)
+![Day-of-Week / Hour Heatmap](images/demand-heatmap.png)
 
 This heatmap aggregates historical missions by weekday and hour to reveal long-term cyclical patterns in LifeFlight demand.
 
@@ -82,21 +78,21 @@ This heatmap aggregates historical missions by weekday and hour to reveal long-t
 
 ### 3. Base Layout & Service Coverage Simulation
 
-<!-- ![Current Base Analysis](Images of README/base-mileage-analysis.png)
+<!-- ![Current Base Analysis](images/base-mileage-analysis.png)
 
 This view analyzes the mileage distributions for each air base, clarifying which bases mainly serve long-haul missions and which provide broader regional coverage. -->
 
-![Response Time by City](Images of README/city-response-time.png)
+![Response Time by City](images/city-response-time.png)
 
 This plot shows city-level response times by base, highlighting locations with significantly longer times that may indicate base locations that are too far away.
 
-![demo](https://github.com/nudataviz/project-fall25-lishenyu1024/blob/cb8b9101435f7d5b924ccce034fd92b6502d9bb7/Images%20of%20README/2025-12-06%2017.21.48.gif?raw=true)
+![demo](images/2025-12-06%2017.21.48.gif)
 
 
 The interactive coverage map lets users toggle existing and candidate base locations and adjust the service radius  
 to see how many high-demand areas would be covered under each scenario.
 
-![Service Coverage Simulation – Ground Units](Images of README/service-coverage-ground.png)
+![Service Coverage Simulation – Ground Units](images/service-coverage-ground.png)
 
 This ground-unit–specific view estimates typical speeds, coverage radius, and compliance rates for units such as neoGround,  
 supporting data-driven base selection for ground transport.
