@@ -12,16 +12,13 @@ We build an interactive data visualization dashboard for analyzing medical trans
 # Current Features
 
 - Current Operations and Service Quality Analysis – how well is LifeFlight doing now?
+    Use the Dashboard tab to explore recent mission volumes, dispatch times, and delay reasons. 
 
 - Mid- to Long-Term Demand Forecasting – how many missions will there be in the future?
+    Switch to Demand Forecasting to adjust model parameters and view 5–10 year mission projections.
 
 - Scenario Simulation of Base Layout and Service Scope – under limited resources, how can bases and assets be arranged more effectively?
-
-# Typical Usage
-
-- Use the Dashboard tab to explore recent mission volumes, dispatch times, and delay reasons.
-- Switch to Demand Forecasting to adjust model parameters and view 5–10 year mission projections.
-- Open the Base Layout & Coverage section to test different base configurations and compare coverage and response time under multiple scenarios.
+    Open the Base Layout & Coverage section to test different base configurations and compare coverage and response time under multiple scenarios.
 
 
 # Tech Stack
