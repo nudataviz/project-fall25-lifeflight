@@ -1,1 +1,0 @@
-//example of prophet model
