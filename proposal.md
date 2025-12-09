@@ -3,26 +3,17 @@ FlightPath Dashboard
 
 # Story
 
-We are prototyping an interactive analytics dashboard to help LifeFlight explore its historical operations, 
+We are building an interactive analytics dashboard to help LifeFlight understand its historical operations and forecast emergency medical demand. The dashboard will also let users compare different resource allocation scenarios, like testing different base locations and service coverage areas.
 
-forecast emergency medical demand over a multi-year horizon, and compare alternative resource allocation scenarios 
+Our prototype focuses on three main areas:
+- Visualizing current mission volume, response times, and base workload
+- Using Prophet time-series model with demographic data to forecast future mission demand
+- Providing interactive maps to compare service coverage under different base configurations
 
-(such as different base locations and service radii).
-
-The prototype focuses on:
-
-- visualizing current mission volume, response times, and base workload,
-
-- using a Prophet time-series model with selected demographic variables to forecast future mission demand, and
-
-- providing interactive maps to compare service coverage and response times under different base layout scenarios.
-
-The goal is not to deliver a production optimization engine, but to offer a transparent, data-driven decision support tool 
-
-that LifeFlight staff can build on in future work.
+This is a prototype and decision support tool that LifeFlight staff can use and build on for future work, not a production-ready optimization system.
 
 # Stakeholder
-Dan Koloski (Initial Contact), LifeFlight Staff (Eventual Users)
+Dan Koloski (Initial Contact), LifeFlight Staff (Users)
 
 ---
 
@@ -37,175 +28,137 @@ https://github.com/nudataviz/project-fall25-lishenyu1024
 ---
 
 # Data
-## Describe
-We primarily use historical and current **LifeFlight operational data** 
+## Description
+We use **LifeFlight operational data** as our primary dataset (transport volume, pickup locations, bases, and asset types). We also use external data sources:
 
-(including transport volume, pickup locations, bases, and asset type) and augment it with a limited set of external data:
+- **Population and demographic data** - historical and projected data at county/city level
+- **Age structure variables** - used as external regressors in our forecasting model
+- **Weather history data** - explored for potential future use
 
-- **Population and demographic data** (historical and projections at the county/city level)
+Right now, demographic variables are integrated into the forecasting model. Weather data is documented but not yet implemented.
 
-- **Age structure** variables used as external regressors in the forecasting model
-
-- **Public weather history sources** explored as potential future regressors
-
-In the current prototype, demographic variables are integrated into the forecasting model.  
-
-Weather data is documented as a possible extension but is not yet fully incorporated into the model.
-
-## Link / Risks
-The core operational data is available in a **SharePoint** repository accessible via Dan Koloski.  
-
-The main risk is the complexity of cleaning and aligning multiple external datasets (population, demographics, weather) 
-
-and the limited time to fully integrate them into robust long-term forecasting and scenario simulations.
+## Source & Risks
+The main challenge is cleaning and aligning multiple external datasets (population, demographics, weather) within our limited timeframe. Integrating them into robust long-term forecasting is complex.
 
 ---
 
-# Scope & Objectives (Current Prototype)
+# Scope & Objectives
 
-## Implemented Features
+## What We Built
 
 ### 1. Current Operations & Service Quality Analysis
 
-- Mission volume by weekday and hour
+We analyze LifeFlight's current performance through several metrics:
+- Mission volume patterns by weekday and hour
+- Dispatch and response time distribution
+- Base workload comparison (air and ground units)
+- "Transport by Primary Q" analysis - whether patients got the right asset without delay
+- Expected completion rate and reasons when bases don't respond
 
-- Dispatch/response time distribution
+### 2. Demand Forecasting
 
-- Base workload comparison across air and ground units
-
-- "Transport by Primary Q" analysis (appropriate asset without delay)
-
-- Expected completion rate and no-response reason analysis
-
-### 2. Mid- to Long-Term Demand Forecasting
-
-- Multi-year mission volume forecasting using a Prophet time-series model
-
-- External regressors based on demographic / age-structure data
-
-- Seasonality analysis via weekday/hour heatmaps
-
+We built a multi-year forecasting system:
+- Prophet time-series model with demographic/age-structure data as regressors
 - Model performance metrics (MAE, MAPE, RMSE)
+- Seasonality analysis using weekday/hour heatmaps
 
-### 3. Scenario Simulation of Base Layout and Service Scope
 
-- Interactive coverage map with existing and candidate base locations
+### 3. Base Layout Scenario Simulation
 
-- Adjustable service radius for scenario comparison
-
+Users can test different base configurations:
+- Interactive map with existing and potential new base locations
+- Adjustable service radius for different scenarios
 - Response time analysis by city and base
+- Ground-unit specific coverage analysis (like neoGround)
 
-- Ground-unit-specific coverage analysis (e.g., neoGround)
+## Technical Stack
 
-## Technical Implementation
-
-- **Backend:** Flask REST API providing processed data and forecast endpoints
-
-- **Frontend:** Observable Framework interactive dashboard
-
-- **Deployment:** GitHub Pages (static build served from `docs/`)
+- **Backend:** Flask REST API for data processing and forecasts
+- **Frontend:** Observable Framework for interactive dashboard
+- **Deployment:** GitHub Pages (static build in `docs/`)
 
 ---
 
-# Visualization Plan (by category)
-**Total: 3 categories, 10+ core visuals** implemented as a working prototype.
+# Visualization Plan
+
+We have **3 main categories with 10+ visualizations** in the working prototype.
 
 ## 1) Current Operations & Service Quality Dashboard
 
-### 1.1 Mission Volume Distribution (Weekday × Hour Heatmap)
-- **Implementation:** Aggregates historical missions by weekday and hour to identify peak demand periods.
-- **Visualization:** Heatmap showing mission volume patterns across time dimensions.
+**1.1 Mission Volume Distribution (Heatmap)**
+- Shows when missions happen most (weekday × hour)
+- Helps identify peak demand periods
 
-### 1.2 Response Time Analysis (Hourly Distribution)
-- **Implementation:** Displays average response time (dispatch time - enroute time) by hour of day for the current month.
-- **Visualization:** Line chart showing response time patterns throughout the day.
+**1.2 Response Time Analysis (Line Chart)**
+- Average response time (dispatch to enroute) by hour
+- Shows patterns throughout the day for current month
 
-### 1.3 Base Workload Analysis
-- **Implementation:** Compares workload across different bases (air units and ground units).
-- **Visualization:** Bar/area charts showing workload distribution by base.
+**1.3 Base Workload Analysis (Bar/Area Charts)**
+- Compares workload across different bases
+- Separate views for air units and ground units
 
-### 1.4 Transport by Primary Q Analysis
-- **Implementation:** Analyzes the `transportByPrimaryQ` field to measure whether patients were transported by the most appropriate asset without delay.
-- **Visualization:** 
-  - Delay Rate chart showing the proportion of "Yes" responses by base
-  - Delay Reason chart showing causes of delays when conditions are not met
+**1.4 Transport by Primary Q Analysis**
+- **Delay Rate Chart:** Shows proportion of "Yes" responses by base (whether patient got appropriate asset without delay)
+- **Delay Reason Chart:** Shows why delays happened when conditions weren't met
 
-### 1.5 Expected Completion Rate & No Response Reasons
-- **Implementation:** Evaluates whether tasks were completed by the expected base (`appropriateAsset` vs `respondingAssets`).
-- **Visualization:**
-  - Expected Completion Rate by Base chart
-  - No Response Reasons by Base chart showing why expected bases did not respond
+**1.5 Expected Completion Rate & No Response Reasons**
+- **Completion Rate Chart:** Compares `appropriateAsset` vs `respondingAssets` by base
+- **No Response Reasons Chart:** Shows why expected bases didn't respond
 
 ---
 
 ## 2) Demand Forecasting
 
-### 2.1 Demand Forecast (multi-year)
-- **Implementation:** Uses a Prophet time-series model with demographic regressors to forecast mission volume.
-- **Model Features:** 
-  - Integration of age-structure variables derived from population data
-  - Reports MAE, MAPE, and RMSE for model evaluation
-- **Visualization:** Line chart with historical and forecasted mission volume, including confidence intervals.
+**2.1 Multi-year Demand Forecast (Line Chart)**
+- Prophet model forecast with confidence intervals
+- Uses age-structure variables from population data
+- Shows historical data and future projections
+- Reports MAE, MAPE, RMSE for evaluation
 
-### 2.2 Seasonality & Day-of-Week/Hour Heatmap
-- **Implementation:** Aggregates historical missions by weekday and hour to reveal cyclical patterns.
-- **Visualization:** Heatmap showing long-term demand patterns across time dimensions.
+**2.2 Seasonality Heatmap**
+- Long-term demand patterns by weekday and hour
+- Shows cyclical patterns in historical data
 
 ---
 
 ## 3) Scenario Modeling & Base Layout
 
-### 3.1 Interactive Coverage Map
-- **Implementation:** Interactive map allowing users to toggle existing and candidate base locations and adjust service radius for scenario comparison.
-- **Features:**
-  - Real-time coverage visualization
-  - Comparison of coverage under different base configurations
-- **Visualization:** Interactive map with coverage areas and base location markers.
+**3.1 Interactive Coverage Map**
+- Toggle existing and candidate base locations
+- Adjust service radius to compare scenarios
+- Real-time coverage visualization
+- Compare different base configurations
 
-### 3.2 Response Time by City
-- **Implementation:** Analyzes city-level response times by base to identify locations with significantly longer response times.
-- **Visualization:** Chart/map showing response time patterns across different cities and bases.
+**3.2 Response Time by City**
+- City-level response time analysis by base
+- Identifies locations with longer response times
+- Helps find underserved areas
 
-### 3.3 Ground Unit Service Coverage
-- **Implementation:** Ground-unit-specific analysis estimating typical speeds, coverage radius, and compliance rates for units such as neoGround.
-- **Visualization:** Coverage map and metrics specific to ground transport units.
-
----
-
-# Technical Approach
-
-We align variable definitions and some metric conventions with **Dan Koloski's prior methodology and deliverables** to maintain comparability.  
-
-We also reference approaches in published aeromedical research (e.g., Jo Røislien, NZ/AU examples) for handling seasonality, spatial coverage, 
-
-and response-time analysis, adapting them to the scope of this prototype.
+**3.3 Ground Unit Coverage (neoGround Analysis)**
+- Ground-unit specific analysis
+- Estimates typical speeds and coverage radius
+- Shows compliance rates for ground transport
 
 ---
 
 # KPIs & Success Metrics
 
-In the current prototype, the dashboard focuses on:
-
-- Mission volume (overall and by time of week)
-
+Our dashboard currently tracks:
+- Mission volume (overall and by time periods)
 - Base workload distribution
+- Dispatch and response time metrics
+- Completion rate (missions handled by expected base)
+- Coverage and compliance in scenario simulations
 
-- Dispatch/response time metrics
-
-- Proportion of missions completed by the expected base
-
-- Coverage and compliance metrics in scenario simulations
-
-Additional KPIs such as unit cost, fleet utilization, or safety incident rates are documented as potential extensions 
-
-but are not implemented in this version.
+We documented additional KPIs (unit cost, fleet utilization, safety incidents) as potential future extensions, but they're not in this version.
 
 ---
 
-# Summary of Visuals (Implemented)
-- **Current Operations & Service Quality Dashboard:** 5+ charts
-- **Demand Forecasting:** 2 charts
-- **Scenario Modeling & Base Layout:** 3+ interactive visualizations
-**Total:** **10+ core visualizations** implemented and functional
+# Summary
+
+**Current Operations Dashboard:** 5+ charts  
+**Demand Forecasting:** 2 charts  
+**Scenario Modeling:** 3+ interactive visualizations  
+**Total: 10+ core visualizations** implemented and working
 
 ---
