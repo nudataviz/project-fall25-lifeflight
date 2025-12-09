@@ -1,10 +1,6 @@
 # Lifeflight Dashboard
 
-LifeFlight of Maine is a non-profit air ambulance and critical care transport agency. It operates three modes of transport: helicopters, fixed-wing aircraft, and ground ambulances, including the specialized neoGround neonatal unit.
-
-At the same time, Maine is large, people are dispersed, weather is harsh, hospitals are closing or merging, and the population is aging. But LifeFlight’s fleet and bases are finite. 
-
-Under these constraints, planning base locations, dispatching aircraft and vehicles, and deciding whether to add or relocate bases become critical strategic questions.
+LifeFlight of Maine is a non-profit air ambulance and critical care transport agency. It operates three modes of transport: helicopters, fixed-wing aircraft, and ground ambulances, including the specialized neoGround neonatal unit. At the same time, Maine is large, people are dispersed, weather is harsh, hospitals are closing or merging, and the population is aging. But LifeFlight's fleet and bases are finite. Under these constraints, planning base locations, dispatching aircraft and vehicles, and deciding whether to add or relocate bases become critical strategic questions.
 
 We build an interactive data visualization dashboard for analyzing medical transport services data.
 
